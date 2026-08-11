@@ -1,42 +1,50 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ShieldCheck, ShieldX, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDate } from '@/lib/utils'
+import type { PublicCertificate } from '@/types'
 
-interface VerifiedCertificate {
-  final_score: number
-  issued_at: string
-  courses: { title: string } | null
-  profiles: { full_name: string } | null
+interface VerifyCertificatePageProps {
+  /** Pré-rempli et lance automatiquement la vérification (route /certificat/verifier/$token). */
+  initialToken?: string
 }
 
-export function VerifyCertificatePage() {
-  const [token, setToken] = useState('')
+async function verifyToken(token: string): Promise<PublicCertificate | null> {
+  const { data, error } = await supabase.rpc('verify_certificate_by_token', { p_token: token })
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+export function VerifyCertificatePage({ initialToken }: VerifyCertificatePageProps = {}) {
+  const [token, setToken] = useState(initialToken ?? '')
   const [status, setStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle')
-  const [result, setResult] = useState<VerifiedCertificate | null>(null)
+  const [result, setResult] = useState<PublicCertificate | null>(null)
 
-  const handleVerify = async () => {
-    if (!token.trim()) return
+  const handleVerify = async (tokenToVerify: string) => {
+    if (!tokenToVerify.trim()) return
     setStatus('loading')
-    // Note : la lecture publique par jeton nécessitera une policy RLS dédiée (ou une
-    // fonction RPC SECURITY DEFINER) — à ajouter en Phase 3 avec la génération des certificats.
-    const { data, error } = await supabase
-      .from('certificates')
-      .select('final_score, issued_at, courses(title), profiles(full_name)')
-      .eq('verify_token', token.trim())
-      .maybeSingle()
-
-    if (error || !data) {
+    try {
+      const data = await verifyToken(tokenToVerify.trim())
+      if (!data) {
+        setStatus('not-found')
+        setResult(null)
+        return
+      }
+      setResult(data)
+      setStatus('found')
+    } catch {
       setStatus('not-found')
       setResult(null)
-      return
     }
-    setResult(data as unknown as VerifiedCertificate)
-    setStatus('found')
   }
+
+  useEffect(() => {
+    if (initialToken) void handleVerify(initialToken)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken])
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col justify-center px-4 py-16 sm:px-6">
@@ -52,8 +60,9 @@ export function VerifyCertificatePage() {
           placeholder="Code de vérification"
           value={token}
           onChange={(e) => setToken(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleVerify(token)}
         />
-        <Button onClick={handleVerify} disabled={status === 'loading'}>
+        <Button onClick={() => handleVerify(token)} disabled={status === 'loading'}>
           <Search className="mr-2 h-4 w-4" /> Vérifier
         </Button>
       </div>
@@ -65,7 +74,7 @@ export function VerifyCertificatePage() {
             <div>
               <p className="font-semibold text-dark">Certificat authentique</p>
               <p className="mt-1 text-sm text-gray">
-                Délivré à {result.profiles?.full_name ?? '—'} pour la formation « {result.courses?.title ?? '—'} »
+                Délivré à {result.student_name} pour la formation « {result.course_title} »
                 le {formatDate(result.issued_at)} avec un score de {result.final_score}%.
               </p>
             </div>

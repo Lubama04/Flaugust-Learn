@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { StickyNote } from 'lucide-react'
+import { StickyNote, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { courseReaderRoute } from '@/router'
@@ -16,8 +16,15 @@ import { VideoCard } from '@/components/reader/VideoCard'
 import { AudioCard } from '@/components/reader/AudioCard'
 import { PdfCard } from '@/components/reader/PdfCard'
 import { ExerciseModal } from '@/components/reader/ExerciseModal'
+import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel'
 import { Button } from '@/components/ui/button'
 import type { CourseSession, Exercise } from '@/types'
+
+function stripHtml(html: string): string {
+  const div = document.createElement('div')
+  div.innerHTML = html
+  return div.textContent ?? ''
+}
 
 async function fetchCourseForReader(slug: string) {
   const { data: course, error } = await supabase.from('courses').select('*').eq('slug', slug).single()
@@ -44,12 +51,14 @@ async function fetchCourseForReader(slug: string) {
 }
 
 async function fetchEnrollment(courseId: string, userId: string) {
+  // "complete" doit rester accessible : un apprenant qui a terminé la formation doit
+  // pouvoir revenir consulter le contenu (cas d'usage LMS standard), pas être bloqué dehors.
   const { data, error } = await supabase
     .from('enrollments')
     .select('*')
     .eq('course_id', courseId)
     .eq('user_id', userId)
-    .eq('status', 'actif')
+    .in('status', ['actif', 'complete'])
     .maybeSingle()
   if (error) throw error
   return data
@@ -127,6 +136,15 @@ function CourseReaderContent() {
     enabled: !!userId && !!activeSession?.id,
   })
 
+  const { data: isCourseComplete } = useQuery({
+    queryKey: ['course-completion', enrollment?.id, completedSessionIds.size],
+    queryFn: async () => {
+      const { data: result } = await supabase.rpc('check_course_completion', { p_enrollment_id: enrollment!.id })
+      return result ?? false
+    },
+    enabled: !!enrollment?.id,
+  })
+
   const handleSelectSession = (session: CourseSession) => {
     void navigate({ search: { session: session.id } })
   }
@@ -171,25 +189,38 @@ function CourseReaderContent() {
           />
         }
         notes={
-          <div className="space-y-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-dark">
-              <StickyNote className="h-4 w-4" /> Mes notes
-            </p>
-            {notes && notes.length > 0 ? (
-              notes.map((note) => (
-                <div key={note.id} className="rounded-lg bg-white p-3 text-sm text-gray shadow-sm">
-                  {note.video_timestamp_seconds !== null && (
-                    <span className="text-xs font-medium text-primary">
-                      {Math.floor(note.video_timestamp_seconds / 60)}:
-                      {String(note.video_timestamp_seconds % 60).padStart(2, '0')} —{' '}
-                    </span>
-                  )}
-                  {note.content}
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-gray-400">Aucune note sur cette session.</p>
+          <div className="space-y-4">
+            {activeSession && (
+              <AIAssistantPanel
+                sessionTitle={activeSession.title}
+                courseTitle={data.course.title}
+                sessionContent={
+                  activeSession.type === 'texte'
+                    ? stripHtml(activeSession.content_text ?? '')
+                    : activeSession.description
+                }
+              />
             )}
+            <div className="space-y-3">
+              <p className="flex items-center gap-2 text-sm font-semibold text-dark">
+                <StickyNote className="h-4 w-4" /> Mes notes
+              </p>
+              {notes && notes.length > 0 ? (
+                notes.map((note) => (
+                  <div key={note.id} className="rounded-lg bg-white p-3 text-sm text-gray shadow-sm">
+                    {note.video_timestamp_seconds !== null && (
+                      <span className="text-xs font-medium text-primary">
+                        {Math.floor(note.video_timestamp_seconds / 60)}:
+                        {String(note.video_timestamp_seconds % 60).padStart(2, '0')} —{' '}
+                      </span>
+                    )}
+                    {note.content}
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400">Aucune note sur cette session.</p>
+              )}
+            </div>
           </div>
         }
         headerAction={
@@ -200,6 +231,19 @@ function CourseReaderContent() {
           </Link>
         }
       >
+        {isCourseComplete && (
+          <div className="mb-6 flex flex-col items-center gap-3 rounded-xl bg-gradient-to-r from-lime/10 to-secondary/10 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-sm font-medium text-dark">
+              🎉 Formation presque terminée ! Passez l'examen final pour obtenir votre certificat.
+            </p>
+            <Link to="/formation/$slug/examen-final" params={{ slug }}>
+              <Button size="sm">
+                <GraduationCap className="mr-2 h-4 w-4" /> Passer l'examen final
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {!activeSession ? (
           <p className="text-center text-gray">Cette formation ne contient pas encore de contenu.</p>
         ) : accessLoading ? (

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { QuizGenerator } from '@/components/ai/QuizGenerator'
 import { QcmBuilder, type QcmQuestion } from '@/components/studio/QcmBuilder'
 import { VraiFauxBuilder, type VraiFauxQuestion } from '@/components/studio/VraiFauxBuilder'
 import { TexteTrousBuilder, type TexteTrousQuestion } from '@/components/studio/TexteTrousBuilder'
@@ -58,6 +61,7 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
   })
 
   const [type, setType] = useState<ExerciseType>('qcm')
+  const [aiDialogOpen, setAiDialogOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [passScore, setPassScore] = useState(70)
@@ -175,7 +179,14 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
       </div>
 
       <div className="space-y-2 border-t border-gray-100 pt-4">
-        <Label>Questions</Label>
+        <div className="flex items-center justify-between">
+          <Label>Questions</Label>
+          {type === 'qcm' && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setAiDialogOpen(true)}>
+              <Sparkles className="mr-2 h-3.5 w-3.5" /> Générer avec l'IA
+            </Button>
+          )}
+        </div>
         {type === 'qcm' && (
           <QcmBuilder questions={questions as QcmQuestion[]} onChange={(q) => setQuestions(q)} />
         )}
@@ -211,6 +222,20 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
           </Button>
         )}
       </div>
+
+      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Générer des questions avec l'IA</DialogTitle>
+          </DialogHeader>
+          <QuizGenerator
+            onInsert={(newQuestions) => {
+              setQuestions((prev) => [...prev, ...newQuestions])
+              setAiDialogOpen(false)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

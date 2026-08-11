@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
       .select('id, user_id, course_id, status')
       .eq('id', enrollment_id)
       .eq('user_id', user.id)
-      .eq('status', 'actif')
+      .in('status', ['actif', 'complete'])
       .single()
 
     if (enrollError || !enrollment) {

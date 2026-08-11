@@ -119,12 +119,15 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Exercice introuvable' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // "complete" reste autorisé : un cours sans exercice de session peut passer à 'complete'
+    // dès la fin de la dernière session (avant même que l'examen final ait été tenté), ce qui
+    // bloquerait sinon la soumission de l'examen final juste après.
     const { data: enrollment } = await supabase
       .from('enrollments')
       .select('id, status')
       .eq('id', enrollment_id)
       .eq('user_id', user.id)
-      .eq('status', 'actif')
+      .in('status', ['actif', 'complete'])
       .single()
 
     if (!enrollment) {

@@ -35,3 +35,12 @@
     font-family: var(--font-display);
   }
 }
+
+/* Impression du certificat (/certificat/:id) : masque le chrome standard du site,
+   pas seulement les boutons de la page — Navbar/Footer viennent de PublicLayout. */
+@media print {
+  header,
+  footer {
+    display: none !important;
+  }
+}

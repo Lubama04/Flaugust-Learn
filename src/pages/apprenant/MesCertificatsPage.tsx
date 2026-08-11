@@ -2,10 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Award } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
-import { Card, CardContent } from '@/components/ui/card'
+import { CertificateCard } from '@/components/certificate/CertificateCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { formatDate } from '@/lib/utils'
 
 async function fetchMyCertificates(userId: string) {
   const { data, error } = await supabase
@@ -40,19 +39,7 @@ export function MesCertificatsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {certificates.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="flex items-start gap-4 pt-6">
-                <Award className="h-8 w-8 shrink-0 text-accent" aria-hidden="true" />
-                <div>
-                  <p className="font-medium text-dark">
-                    {(c as { courses?: { title?: string } }).courses?.title}
-                  </p>
-                  <p className="text-sm text-gray">
-                    Délivré le {formatDate(c.issued_at)} — Score {c.final_score}%
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <CertificateCard key={c.id} certificate={c} />
           ))}
         </div>
       )}

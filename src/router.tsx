@@ -12,19 +12,23 @@ import { CourseDetailPage } from '@/pages/public/CourseDetailPage'
 import { LoginPage } from '@/pages/public/LoginPage'
 import { RegisterPage } from '@/pages/public/RegisterPage'
 import { VerifyCertificatePage } from '@/pages/public/VerifyCertificatePage'
+import { CertificateViewerPage } from '@/pages/public/CertificateViewerPage'
 import { UnauthorizedPage } from '@/pages/public/UnauthorizedPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
 
 import { DashboardPage } from '@/pages/apprenant/DashboardPage'
 import { MesFormationsPage } from '@/pages/apprenant/MesFormationsPage'
 import { MesCertificatsPage } from '@/pages/apprenant/MesCertificatsPage'
+import { MesDocumentsPage } from '@/pages/apprenant/MesDocumentsPage'
 import { ProfilPage } from '@/pages/apprenant/ProfilPage'
 import { CourseReaderPage } from '@/pages/apprenant/CourseReaderPage'
+import { ExamenFinalPage } from '@/pages/apprenant/ExamenFinalPage'
 
 import { DashboardFormateurPage } from '@/pages/formateur/DashboardFormateurPage'
 import { InscriptionsPage } from '@/pages/formateur/InscriptionsPage'
 import { CourseCreatePage } from '@/pages/formateur/CourseCreatePage'
 import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
+import { QuizGeneratorPage } from '@/pages/formateur/QuizGeneratorPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
 
@@ -66,7 +70,20 @@ const registerRoute = createRoute({
 const verifyCertificateRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
   path: '/verify-certificat',
-  component: VerifyCertificatePage,
+  component: () => <VerifyCertificatePage />,
+})
+export const certificateVerifyTokenRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/certificat/verifier/$token',
+  component: function CertificateVerifyTokenRoute() {
+    const { token } = certificateVerifyTokenRoute.useParams()
+    return <VerifyCertificatePage initialToken={token} />
+  },
+})
+export const certificateViewerRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/certificat/$id',
+  component: CertificateViewerPage,
 })
 const unauthorizedRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
@@ -80,6 +97,16 @@ const profilRoute = createRoute({
   component: () => (
     <ProtectedRoute>
       <ProfilPage />
+    </ProtectedRoute>
+  ),
+})
+// Mes documents (export d'évaluations) : accessible à tous les rôles authentifiés.
+const documentsRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/documents',
+  component: () => (
+    <ProtectedRoute>
+      <MesDocumentsPage />
     </ProtectedRoute>
   ),
 })
@@ -132,15 +159,10 @@ export const courseEditRoute = createRoute({
   path: '/formateur/formations/$courseId/editer',
   component: CourseEditPage,
 })
-
-// ── Lecteur de formation (immersif, sans chrome standard) ───────
-export const courseReaderRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/formation/$slug/apprendre',
-  validateSearch: (search: Record<string, unknown>): { session?: string } => ({
-    session: typeof search.session === 'string' ? search.session : undefined,
-  }),
-  component: CourseReaderPage,
+const quizGeneratorRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/quiz-generator',
+  component: QuizGeneratorPage,
 })
 
 // ── Groupe ADMIN ───────────────────────────────────────────────
@@ -155,6 +177,21 @@ const adminDashboardRoute = createRoute({
   component: DashboardAdminPage,
 })
 
+// ── Lecteur de formation et examen final (immersifs, sans chrome standard) ──
+export const courseReaderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/formation/$slug/apprendre',
+  validateSearch: (search: Record<string, unknown>): { session?: string } => ({
+    session: typeof search.session === 'string' ? search.session : undefined,
+  }),
+  component: CourseReaderPage,
+})
+export const examenFinalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/formation/$slug/examen-final',
+  component: ExamenFinalPage,
+})
+
 const routeTree = rootRoute.addChildren([
   publicLayoutRoute.addChildren([
     homeRoute,
@@ -163,8 +200,11 @@ const routeTree = rootRoute.addChildren([
     loginRoute,
     registerRoute,
     verifyCertificateRoute,
+    certificateVerifyTokenRoute,
+    certificateViewerRoute,
     unauthorizedRoute,
     profilRoute,
+    documentsRoute,
   ]),
   apprentLayoutRoute.addChildren([dashboardRoute, mesFormationsRoute, mesCertificatsRoute]),
   formateurLayoutRoute.addChildren([
@@ -172,9 +212,11 @@ const routeTree = rootRoute.addChildren([
     inscriptionsRoute,
     courseCreateRoute,
     courseEditRoute,
+    quizGeneratorRoute,
   ]),
   adminLayoutRoute.addChildren([adminDashboardRoute]),
   courseReaderRoute,
+  examenFinalRoute,
 ])
 
 export const router = createRouter({

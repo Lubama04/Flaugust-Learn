@@ -16,13 +16,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_exports: {
+        Row: {
+          enrollment_id: string
+          file_url: string | null
+          format: string
+          generated_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          enrollment_id: string
+          file_url?: string | null
+          format: string
+          generated_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          enrollment_id?: string
+          file_url?: string | null
+          format?: string
+          generated_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_exports_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "assessment_exports_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_exports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificates: {
         Row: {
           course_id: string
+          course_title: string
+          duration_hours: number
           email_sent: boolean
           email_sent_at: string | null
           enrollment_id: string
           final_score: number
+          formateur_name: string
           id: string
           issued_at: string
           pdf_url: string | null
@@ -31,10 +83,13 @@ export type Database = {
         }
         Insert: {
           course_id: string
+          course_title?: string
+          duration_hours?: number
           email_sent?: boolean
           email_sent_at?: string | null
           enrollment_id: string
           final_score: number
+          formateur_name?: string
           id?: string
           issued_at?: string
           pdf_url?: string | null
@@ -43,10 +98,13 @@ export type Database = {
         }
         Update: {
           course_id?: string
+          course_title?: string
+          duration_hours?: number
           email_sent?: boolean
           email_sent_at?: string | null
           enrollment_id?: string
           final_score?: number
+          formateur_name?: string
           id?: string
           issued_at?: string
           pdf_url?: string | null
@@ -514,6 +572,47 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           contact_email: string | null
@@ -831,9 +930,38 @@ export type Database = {
       }
     }
     Functions: {
+      check_course_completion: {
+        Args: { p_enrollment_id: string }
+        Returns: boolean
+      }
+      get_certificate_by_id: {
+        Args: { p_id: string }
+        Returns: {
+          course_title: string
+          duration_hours: number
+          final_score: number
+          formateur_name: string
+          id: string
+          issued_at: string
+          student_name: string
+          verify_token: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_enrolled: { Args: { p_course_id: string }; Returns: boolean }
       is_formateur: { Args: never; Returns: boolean }
+      verify_certificate_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          course_title: string
+          duration_hours: number
+          final_score: number
+          formateur_name: string
+          id: string
+          issued_at: string
+          student_name: string
+        }[]
+      }
     }
     Enums: {
       course_status: "brouillon" | "en_revision" | "publie" | "archive"
