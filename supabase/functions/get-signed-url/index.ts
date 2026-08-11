@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const ALLOWED_BUCKETS = new Set(['course-videos', 'course-documents'])
+const ALLOWED_BUCKETS = new Set(['course-videos', 'course-documents', 'course-resources'])
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -45,34 +45,43 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Vérifier que l'utilisateur est bien inscrit et actif sur le cours concerné.
-    // enrollment_id est obligatoire pour ces deux buckets privés (pas de contenu public ici).
-    // Note : contrairement au brouillon initial du CDC (enrollment_id optionnel), cette
-    // vérification est rendue systématique — sans elle, n'importe quel utilisateur
-    // authentifié pourrait obtenir une URL signée vers n'importe quel fichier du bucket.
-    if (!enrollment_id) {
-      return new Response(
-        JSON.stringify({ error: 'enrollment_id requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // Le chemin encode toujours le cours propriétaire en premier segment
+    // ({course_id}/{uuid}.{ext} — convention utilisée par tous les uploads formateur).
+    const pathCourseId = String(path).split('/')[0]
+
+    // Vérifier que l'utilisateur est bien inscrit et actif sur LE COURS PROPRIÉTAIRE DU
+    // FICHIER demandé (pas juste inscrit à une formation quelconque — sans ce contrôle,
+    // une inscription valide sur le cours A donnait accès à n'importe quel fichier privé
+    // du cours B tant que le status était actif/complete, IDOR). enrollment_id reste
+    // optionnel côté API : un formateur ou un admin prévisualisant son propre contenu n'a
+    // logiquement pas d'inscription, il tombe alors sur la vérification de privilège ci-dessous.
+    let enrollmentMatchesPath = false
+    if (enrollment_id) {
+      const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('id, status, course_id')
+        .eq('id', enrollment_id)
+        .eq('user_id', user.id)
+        .in('status', ['actif', 'complete'])
+        .single()
+      enrollmentMatchesPath = !!enrollment && enrollment.course_id === pathCourseId
     }
 
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('id, status, course_id')
-      .eq('id', enrollment_id)
-      .eq('user_id', user.id)
-      .in('status', ['actif', 'complete'])
-      .single()
-
-    if (!enrollment) {
-      // Le formateur propriétaire du cours doit aussi pouvoir prévisualiser son contenu.
+    if (!enrollmentMatchesPath) {
+      // Le formateur propriétaire de CE cours (pas n'importe quel formateur) ou un admin
+      // peut aussi prévisualiser le contenu.
+      const { data: course } = await supabase
+        .from('courses')
+        .select('formateur_id')
+        .eq('id', pathCourseId)
+        .single()
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-      const isPrivileged = profile?.role === 'formateur' || profile?.role === 'admin'
+      const isPrivileged =
+        profile?.role === 'admin' || (profile?.role === 'formateur' && course?.formateur_id === user.id)
       if (!isPrivileged) {
         return new Response(
           JSON.stringify({ error: 'Accès non autorisé' }),

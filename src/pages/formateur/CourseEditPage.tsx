@@ -6,6 +6,8 @@ import { courseEditRoute } from '@/router'
 import { CourseForm } from '@/components/studio/CourseForm'
 import { ModuleBuilder } from '@/components/studio/ModuleBuilder'
 import { ExerciseBuilder } from '@/components/studio/ExerciseBuilder'
+import { ResourceLibrary } from '@/components/resources/ResourceLibrary'
+import { FormationSchedule } from '@/components/schedule/FormationSchedule'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -83,6 +85,8 @@ export function CourseEditPage() {
         <TabsList>
           <TabsTrigger value="details">Détails</TabsTrigger>
           <TabsTrigger value="contenu">Contenu</TabsTrigger>
+          <TabsTrigger value="ressources">Ressources</TabsTrigger>
+          <TabsTrigger value="rythme">Rythme</TabsTrigger>
           <TabsTrigger value="examen">Examen final</TabsTrigger>
           <TabsTrigger value="publication">Publication</TabsTrigger>
         </TabsList>
@@ -93,6 +97,14 @@ export function CourseEditPage() {
 
         <TabsContent value="contenu">
           <ModuleBuilder courseId={courseId} />
+        </TabsContent>
+
+        <TabsContent value="ressources">
+          <ResourceLibrary courseId={courseId} />
+        </TabsContent>
+
+        <TabsContent value="rythme">
+          <FormationSchedule courseId={courseId} />
         </TabsContent>
 
         <TabsContent value="examen">

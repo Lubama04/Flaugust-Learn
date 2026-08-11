@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, BookOpen, ClipboardList, Award } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { Users, BookOpen, ClipboardList, Award, Clock, Wallet } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -9,17 +10,21 @@ import { formatDate } from '@/lib/utils'
 import type { Profile, UserRole } from '@/types'
 
 async function fetchStats() {
-  const [users, courses, enrollments, certificates] = await Promise.all([
+  const [users, courses, enrollments, certificates, pendingEnrollments, pendingPayments] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
     supabase.from('enrollments').select('*', { count: 'exact', head: true }),
     supabase.from('certificates').select('*', { count: 'exact', head: true }),
+    supabase.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'en_attente'),
+    supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'en_attente'),
   ])
   return {
     users: users.count ?? 0,
     courses: courses.count ?? 0,
     enrollments: enrollments.count ?? 0,
     certificates: certificates.count ?? 0,
+    pendingEnrollments: pendingEnrollments.count ?? 0,
+    pendingPayments: pendingPayments.count ?? 0,
   }
 }
 
@@ -68,13 +73,24 @@ export function DashboardAdminPage() {
       {statsLoading ? (
         <LoadingSpinner label="Chargement des statistiques…" />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard icon={Users} label="Utilisateurs" value={stats?.users ?? 0} />
           <StatCard icon={BookOpen} label="Formations" value={stats?.courses ?? 0} />
           <StatCard icon={ClipboardList} label="Inscriptions" value={stats?.enrollments ?? 0} />
           <StatCard icon={Award} label="Certificats" value={stats?.certificates ?? 0} />
+          <StatCard icon={Clock} label="Inscriptions en attente" value={stats?.pendingEnrollments ?? 0} />
+          <StatCard icon={Wallet} label="Paiements en attente" value={stats?.pendingPayments ?? 0} />
         </div>
       )}
+
+      <div className="flex flex-wrap gap-3">
+        <Link to="/admin/utilisateurs" className="text-sm font-medium text-primary hover:underline">
+          Gérer les utilisateurs →
+        </Link>
+        <Link to="/admin/paiements" className="text-sm font-medium text-primary hover:underline">
+          Gérer les paiements →
+        </Link>
+      </div>
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-dark">Derniers utilisateurs inscrits</h2>

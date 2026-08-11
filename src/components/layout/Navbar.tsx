@@ -7,6 +7,7 @@ import { signOut, dashboardPathForRole } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 const NAV_LINKS = [
   { to: '/', label: 'Accueil' },
@@ -69,6 +70,7 @@ export function Navbar() {
               >
                 Tableau de bord
               </Link>
+              <NotificationBell />
               <Link to="/profil">
                 <Avatar>
                   <AvatarFallback>{initials}</AvatarFallback>

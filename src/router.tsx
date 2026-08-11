@@ -15,6 +15,8 @@ import { VerifyCertificatePage } from '@/pages/public/VerifyCertificatePage'
 import { CertificateViewerPage } from '@/pages/public/CertificateViewerPage'
 import { UnauthorizedPage } from '@/pages/public/UnauthorizedPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
+import { CourseChatPage } from '@/pages/public/CourseChatPage'
+import { NotificationsPage } from '@/pages/public/NotificationsPage'
 
 import { DashboardPage } from '@/pages/apprenant/DashboardPage'
 import { MesFormationsPage } from '@/pages/apprenant/MesFormationsPage'
@@ -31,6 +33,8 @@ import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
 import { QuizGeneratorPage } from '@/pages/formateur/QuizGeneratorPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
+import { UsersPage } from '@/pages/admin/UsersPage'
+import { PaymentsPage } from '@/pages/admin/PaymentsPage'
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -110,6 +114,17 @@ const documentsRoute = createRoute({
     </ProtectedRoute>
   ),
 })
+// Discussion de formation : accessible aux inscrits actifs, au formateur propriétaire et à l'admin.
+export const courseChatRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/formation/$slug/discussion',
+  component: CourseChatPage,
+})
+const notificationsRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/notifications',
+  component: NotificationsPage,
+})
 
 // ── Groupe APPRENANT ───────────────────────────────────────────
 const apprentLayoutRoute = createRoute({
@@ -176,6 +191,16 @@ const adminDashboardRoute = createRoute({
   path: '/admin',
   component: DashboardAdminPage,
 })
+const adminUsersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: '/admin/utilisateurs',
+  component: UsersPage,
+})
+const adminPaymentsRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: '/admin/paiements',
+  component: PaymentsPage,
+})
 
 // ── Lecteur de formation et examen final (immersifs, sans chrome standard) ──
 export const courseReaderRoute = createRoute({
@@ -205,6 +230,8 @@ const routeTree = rootRoute.addChildren([
     unauthorizedRoute,
     profilRoute,
     documentsRoute,
+    courseChatRoute,
+    notificationsRoute,
   ]),
   apprentLayoutRoute.addChildren([dashboardRoute, mesFormationsRoute, mesCertificatsRoute]),
   formateurLayoutRoute.addChildren([
@@ -214,7 +241,7 @@ const routeTree = rootRoute.addChildren([
     courseEditRoute,
     quizGeneratorRoute,
   ]),
-  adminLayoutRoute.addChildren([adminDashboardRoute]),
+  adminLayoutRoute.addChildren([adminDashboardRoute, adminUsersRoute, adminPaymentsRoute]),
   courseReaderRoute,
   examenFinalRoute,
 ])

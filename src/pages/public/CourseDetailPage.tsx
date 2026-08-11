@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Layers, FileText, Lock, PlayCircle, Award } from 'lucide-react'
+import { Clock, Layers, FileText, Lock, PlayCircle, Award, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useToast } from '@/hooks/useToast'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { DownloadableResources } from '@/components/resources/DownloadableResources'
 import { formatPrice } from '@/lib/utils'
 
 async function fetchCourseBySlug(slug: string) {
@@ -163,6 +164,15 @@ export function CourseDetailPage() {
               </p>
             )}
           </div>
+
+          {(enrollment?.status === 'actif' || enrollment?.status === 'complete') && (
+            <>
+              <h2 className="mt-8 text-xl font-semibold text-dark">Ressources téléchargeables</h2>
+              <div className="mt-4">
+                <DownloadableResources courseId={course.id} enrollmentId={enrollment.id} />
+              </div>
+            </>
+          )}
         </div>
 
         <div>
@@ -182,13 +192,25 @@ export function CourseDetailPage() {
                       </Button>
                     </Link>
                   )}
+                  <Link to="/formation/$slug/discussion" params={{ slug }}>
+                    <Button variant="outline" className="w-full">
+                      <MessageCircle className="mr-2 h-4 w-4" /> Discussion
+                    </Button>
+                  </Link>
                 </div>
               ) : enrollment?.status === 'actif' ? (
-                <Link to="/formation/$slug/apprendre" params={{ slug }} className="mt-4 block">
-                  <Button className="w-full" size="lg">
-                    Reprendre →
-                  </Button>
-                </Link>
+                <div className="mt-4 space-y-2">
+                  <Link to="/formation/$slug/apprendre" params={{ slug }} className="block">
+                    <Button className="w-full" size="lg">
+                      Reprendre →
+                    </Button>
+                  </Link>
+                  <Link to="/formation/$slug/discussion" params={{ slug }}>
+                    <Button variant="outline" className="w-full">
+                      <MessageCircle className="mr-2 h-4 w-4" /> Discussion
+                    </Button>
+                  </Link>
+                </div>
               ) : enrollment?.status === 'en_attente' ? (
                 <p className="mt-4 rounded-lg bg-accent/10 p-3 text-sm text-accent">
                   Votre inscription est en cours de validation.

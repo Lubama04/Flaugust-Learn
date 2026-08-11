@@ -51,7 +51,21 @@ export interface AssessmentExportData {
 export type Payment = Tables<'payments'>
 export type LearnerNote = Tables<'learner_notes'>
 export type CourseRating = Tables<'course_ratings'>
+export type CourseResource = Tables<'course_resources'>
+export type CourseMessage = Tables<'course_messages'>
+export type FormationSchedule = Tables<'formation_schedules'>
+export type PushSubscriptionRow = Tables<'push_subscriptions'>
+export type AdminLog = Tables<'admin_logs'>
+export type ResourceAccessLog = Tables<'resource_access_logs'>
 
 export type UserRole = Profile['role']
 export type EnrollmentStatus = Enrollment['status']
 export type CourseStatus = Course['status']
+export type IndexingStatus = 'non_indexe' | 'en_cours' | 'indexe' | 'echec'
+
+/** Une source citée par l'IA dans une réponse du chat de formation. */
+export interface AiChatSource {
+  resource_id: string
+  title: string
+  excerpt: string
+}

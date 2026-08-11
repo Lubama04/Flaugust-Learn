@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { StickyNote, GraduationCap } from 'lucide-react'
+import { StickyNote, GraduationCap, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { courseReaderRoute } from '@/router'
@@ -224,11 +224,18 @@ function CourseReaderContent() {
           </div>
         }
         headerAction={
-          <Link to="/formation/$slug" params={{ slug }}>
-            <Button variant="ghost" size="sm">
-              Quitter
-            </Button>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link to="/formation/$slug/discussion" params={{ slug }}>
+              <Button variant="ghost" size="sm">
+                <MessageCircle className="mr-1.5 h-4 w-4" /> Discussion
+              </Button>
+            </Link>
+            <Link to="/formation/$slug" params={{ slug }}>
+              <Button variant="ghost" size="sm">
+                Quitter
+              </Button>
+            </Link>
+          </div>
         }
       >
         {isCourseComplete && (

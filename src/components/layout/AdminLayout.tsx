@@ -1,10 +1,14 @@
 import { Outlet } from '@tanstack/react-router'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Users, Wallet } from 'lucide-react'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { DashboardSidebar, type SidebarLink } from '@/components/layout/DashboardSidebar'
 import { Navbar } from '@/components/layout/Navbar'
 
-const LINKS: SidebarLink[] = [{ to: '/admin', label: "Vue d'ensemble", icon: ShieldCheck }]
+const LINKS: SidebarLink[] = [
+  { to: '/admin', label: "Vue d'ensemble", icon: ShieldCheck },
+  { to: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
+  { to: '/admin/paiements', label: 'Paiements', icon: Wallet },
+]
 
 export function AdminLayout() {
   return (

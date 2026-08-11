@@ -1,7 +1,3 @@
-// Types générés automatiquement depuis le schéma Supabase (project_id: xwlaipdlskpslvwgreqm)
-// Ne pas éditer manuellement — régénérer via Supabase MCP (generate_typescript_types)
-// après toute modification du schéma.
-
 export type Json =
   | string
   | number
@@ -11,11 +7,51 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_exports: {
         Row: {
           enrollment_id: string
@@ -142,6 +178,79 @@ export type Database = {
           },
         ]
       }
+      course_messages: {
+        Row: {
+          ai_sources: Json
+          content: string
+          course_id: string
+          created_at: string
+          id: string
+          is_ai: boolean
+          is_flagged_urgent: boolean
+          is_private: boolean
+          media_type: string | null
+          media_url: string | null
+          needs_formateur: boolean
+          private_recipient_id: string | null
+          transcription: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_sources?: Json
+          content?: string
+          course_id: string
+          created_at?: string
+          id?: string
+          is_ai?: boolean
+          is_flagged_urgent?: boolean
+          is_private?: boolean
+          media_type?: string | null
+          media_url?: string | null
+          needs_formateur?: boolean
+          private_recipient_id?: string | null
+          transcription?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_sources?: Json
+          content?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          is_ai?: boolean
+          is_flagged_urgent?: boolean
+          is_private?: boolean
+          media_type?: string | null
+          media_url?: string | null
+          needs_formateur?: boolean
+          private_recipient_id?: string | null
+          transcription?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_messages_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_messages_private_recipient_id_fkey"
+            columns: ["private_recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_ratings: {
         Row: {
           comment: string | null
@@ -178,6 +287,75 @@ export type Database = {
           {
             foreignKeyName: "course_ratings_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_resources: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string
+          extracted_text: string | null
+          file_size_bytes: number
+          file_type: string
+          file_url: string
+          formateur_id: string
+          id: string
+          indexing_error: string | null
+          indexing_status: string
+          is_ai_indexed: boolean
+          is_downloadable: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string
+          extracted_text?: string | null
+          file_size_bytes?: number
+          file_type: string
+          file_url: string
+          formateur_id: string
+          id?: string
+          indexing_error?: string | null
+          indexing_status?: string
+          is_ai_indexed?: boolean
+          is_downloadable?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string
+          extracted_text?: string | null
+          file_size_bytes?: number
+          file_type?: string
+          file_url?: string
+          formateur_id?: string
+          id?: string
+          indexing_error?: string | null
+          indexing_status?: string
+          is_ai_indexed?: boolean
+          is_downloadable?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_resources_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_resources_formateur_id_fkey"
+            columns: ["formateur_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -486,6 +664,63 @@ export type Database = {
           },
         ]
       }
+      formation_schedules: {
+        Row: {
+          course_id: string
+          created_at: string
+          formateur_id: string
+          heure_debut: string
+          heure_fin: string
+          id: string
+          is_active: boolean
+          jours_semaine: number[]
+          rappel_heures_avant: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          formateur_id: string
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          is_active?: boolean
+          jours_semaine?: number[]
+          rappel_heures_avant?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          formateur_id?: string
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          is_active?: boolean
+          jours_semaine?: number[]
+          rappel_heures_avant?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formation_schedules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_schedules_formateur_id_fkey"
+            columns: ["formateur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learner_notes: {
         Row: {
           content: string
@@ -670,6 +905,8 @@ export type Database = {
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
           user_id: string
+          validated_at: string | null
+          validated_by: string | null
         }
         Insert: {
           amount_fcfa: number
@@ -685,6 +922,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
           user_id: string
+          validated_at?: string | null
+          validated_by?: string | null
         }
         Update: {
           amount_fcfa?: number
@@ -700,6 +939,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
           user_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
         }
         Relationships: [
           {
@@ -726,6 +967,13 @@ export type Database = {
           {
             foreignKeyName: "payments_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_validated_by_fkey"
+            columns: ["validated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -781,6 +1029,80 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_access_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          resource_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          resource_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          resource_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_access_logs_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "course_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
