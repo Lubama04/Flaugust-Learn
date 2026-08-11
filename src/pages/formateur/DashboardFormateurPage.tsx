@@ -39,10 +39,11 @@ export function DashboardFormateurPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-dark">Mes formations</h1>
-        {/* La création de formation (studio) arrive en Phase 2 — bouton présent dès maintenant */}
-        <Button disabled title="Disponible en Phase 2">
-          <Plus className="mr-2 h-4 w-4" /> Créer une formation
-        </Button>
+        <Link to="/formateur/formations/nouvelle">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Créer une formation
+          </Button>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -51,20 +52,22 @@ export function DashboardFormateurPage() {
         <EmptyState
           icon={BookOpen}
           title="Vous n'avez créé aucune formation"
-          description="Le studio de création sera disponible en Phase 2."
+          description="Cliquez sur « Créer une formation » pour démarrer."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <Card key={course.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <p className="font-medium text-dark">{course.title}</p>
-                  <Badge variant="gray">{STATUS_LABELS[course.status]}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-gray">{course.enrolled_count} inscrit(s)</p>
-              </CardContent>
-            </Card>
+            <Link key={course.id} to="/formateur/formations/$courseId/editer" params={{ courseId: course.id }}>
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <p className="font-medium text-dark">{course.title}</p>
+                    <Badge variant="gray">{STATUS_LABELS[course.status]}</Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-gray">{course.enrolled_count} inscrit(s)</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

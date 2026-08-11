@@ -7,6 +7,7 @@ import { signIn, dashboardPathForRole, requestPasswordReset } from '@/hooks/useA
 import { supabase } from '@/lib/supabase'
 import { loginSchema, type LoginInput } from '@/lib/validations'
 import { useToast } from '@/hooks/useToast'
+import { loginRoute } from '@/router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label'
 export function LoginPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { redirect } = loginRoute.useSearch()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -32,8 +34,12 @@ export function LoginPage() {
         .select('role')
         .eq('id', user.id)
         .single()
-      toast.success('Connexion réussie');
-      await navigate({ to: dashboardPathForRole(profile?.role) })
+      toast.success('Connexion réussie')
+      if (redirect) {
+        await navigate({ to: redirect })
+      } else {
+        await navigate({ to: dashboardPathForRole(profile?.role) })
+      }
     } catch {
       // Message générique — ne pas révéler si c'est l'email ou le mot de passe qui est incorrect
       toast.error('Email ou mot de passe incorrect')

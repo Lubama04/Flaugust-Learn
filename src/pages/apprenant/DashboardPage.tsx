@@ -8,11 +8,14 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 
 async function fetchMyEnrollments(userId: string) {
+  // "actif" (en cours) et "complete" (terminée) doivent apparaître toutes les deux ici —
+  // sinon les formations terminées disparaissent du tableau de bord (progress_pct=100 mais
+  // status='complete' les excluait auparavant d'un filtre status='actif' trop strict).
   const { data, error } = await supabase
     .from('enrollments')
     .select('*, courses(title, duration_hours)')
     .eq('user_id', userId)
-    .eq('status', 'actif')
+    .in('status', ['actif', 'complete'])
   if (error) throw error
   return data
 }

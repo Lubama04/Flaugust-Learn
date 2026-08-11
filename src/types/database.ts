@@ -65,6 +65,13 @@ export type Database = {
             foreignKeyName: "certificates_enrollment_id_fkey"
             columns: ["enrollment_id"]
             isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "certificates_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
             referencedRelation: "enrollments"
             referencedColumns: ["id"]
           },
@@ -316,6 +323,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "exercise_results_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
           {
             foreignKeyName: "exercise_results_enrollment_id_fkey"
             columns: ["enrollment_id"]
@@ -600,6 +614,13 @@ export type Database = {
             foreignKeyName: "payments_enrollment_id_fkey"
             columns: ["enrollment_id"]
             isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "payments_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
             referencedRelation: "enrollments"
             referencedColumns: ["id"]
           },
@@ -704,6 +725,13 @@ export type Database = {
             foreignKeyName: "session_progress_enrollment_id_fkey"
             columns: ["enrollment_id"]
             isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "session_progress_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
             referencedRelation: "enrollments"
             referencedColumns: ["id"]
           },
@@ -774,7 +802,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      enrollment_progress_view: {
+        Row: {
+          completed_sessions: number | null
+          course_id: string | null
+          enrollment_id: string | null
+          progress_pct: number | null
+          status: Database["public"]["Enums"]["enrollment_status"] | null
+          total_sessions: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }

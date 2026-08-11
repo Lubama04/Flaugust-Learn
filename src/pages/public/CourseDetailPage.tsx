@@ -1,10 +1,10 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { courseDetailRoute } from '@/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Layers, FileText, Lock, PlayCircle } from 'lucide-react'
+import { Clock, Layers, FileText, Lock, PlayCircle, Award } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useToast } from '@/hooks/useToast'
+import { courseDetailRoute } from '@/router'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,7 +21,7 @@ async function fetchCourseBySlug(slug: string) {
 
   const { data: modules, error: modulesError } = await supabase
     .from('modules')
-    .select('*, sessions(*)')
+    .select('*, sessions(id, title, type, duration_minutes, order_index, is_free_preview)')
     .eq('course_id', course.id)
     .order('order_index', { ascending: true })
   if (modulesError) throw modulesError
@@ -33,6 +33,17 @@ async function fetchMyEnrollment(courseId: string, userId: string) {
   const { data, error } = await supabase
     .from('enrollments')
     .select('*')
+    .eq('course_id', courseId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+async function fetchMyCertificate(courseId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('certificates')
+    .select('id')
     .eq('course_id', courseId)
     .eq('user_id', userId)
     .maybeSingle()
@@ -58,6 +69,12 @@ export function CourseDetailPage() {
     enabled: !!data?.course.id && !!session?.user.id,
   })
 
+  const { data: certificate } = useQuery({
+    queryKey: ['certificate', data?.course.id, session?.user.id],
+    queryFn: () => fetchMyCertificate(data!.course.id, session!.user.id),
+    enabled: !!data?.course.id && !!session?.user.id && enrollment?.status === 'complete',
+  })
+
   const enrollMutation = useMutation({
     mutationFn: async () => {
       if (!session) throw new Error('non connecté')
@@ -75,7 +92,7 @@ export function CourseDetailPage() {
 
   const handleEnrollClick = () => {
     if (!session) {
-      void navigate({ to: '/login' })
+      void navigate({ to: '/login', search: { redirect: `/formation/${slug}` } as never })
       return
     }
     enrollMutation.mutate()
@@ -120,8 +137,10 @@ export function CourseDetailPage() {
                       <Layers className="h-4 w-4 text-primary" /> {module.title}
                     </div>
                     <ul className="mt-3 space-y-2">
-                      {(module.sessions ?? []).map(
-                        (s: { id: string; title: string; is_free_preview: boolean }) => (
+                      {(module.sessions ?? [])
+                        .slice()
+                        .sort((a, b) => a.order_index - b.order_index)
+                        .map((s) => (
                           <li key={s.id} className="flex items-center gap-2 text-sm text-gray">
                             {s.is_free_preview ? (
                               <PlayCircle className="h-4 w-4 text-secondary" />
@@ -129,9 +148,11 @@ export function CourseDetailPage() {
                               <Lock className="h-4 w-4 text-gray-300" />
                             )}
                             {s.title}
+                            {s.duration_minutes > 0 && (
+                              <span className="text-xs text-gray-400">· {s.duration_minutes} min</span>
+                            )}
                           </li>
-                        )
-                      )}
+                        ))}
                     </ul>
                   </CardContent>
                 </Card>
@@ -149,20 +170,33 @@ export function CourseDetailPage() {
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-primary">{formatPrice(course.price_fcfa)}</div>
 
-              {enrollment ? (
-                enrollment.status === 'en_attente' ? (
-                  <p className="mt-4 rounded-lg bg-accent/10 p-3 text-sm text-accent">
-                    Votre inscription est en cours de validation.
+              {enrollment?.status === 'complete' ? (
+                <div className="mt-4 space-y-3">
+                  <p className="rounded-lg bg-lime/10 p-3 text-sm text-lime">
+                    Formation complétée ✅
                   </p>
-                ) : enrollment.status === 'actif' ? (
-                  <p className="mt-4 rounded-lg bg-secondary/10 p-3 text-sm text-secondary">
-                    Vous êtes inscrit à cette formation.
-                  </p>
-                ) : (
-                  <p className="mt-4 rounded-lg bg-gray-100 p-3 text-sm text-gray">
-                    Statut : {enrollment.status}
-                  </p>
-                )
+                  {certificate && (
+                    <Link to="/mes-certificats">
+                      <Button variant="outline" className="w-full">
+                        <Award className="mr-2 h-4 w-4" /> Voir mon certificat
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              ) : enrollment?.status === 'actif' ? (
+                <Link to="/formation/$slug/apprendre" params={{ slug }} className="mt-4 block">
+                  <Button className="w-full" size="lg">
+                    Reprendre →
+                  </Button>
+                </Link>
+              ) : enrollment?.status === 'en_attente' ? (
+                <p className="mt-4 rounded-lg bg-accent/10 p-3 text-sm text-accent">
+                  Votre inscription est en cours de validation.
+                </p>
+              ) : enrollment?.status === 'suspendu' ? (
+                <p className="mt-4 rounded-lg bg-gray-100 p-3 text-sm text-gray">
+                  Votre inscription n'a pas été validée. Contactez le formateur.
+                </p>
               ) : (
                 <Button
                   className="mt-4 w-full"

@@ -15,3 +15,5 @@ export type LearnerNote = Tables<'learner_notes'>
 export type CourseRating = Tables<'course_ratings'>
 
 export type UserRole = Profile['role']
+export type EnrollmentStatus = Enrollment['status']
+export type CourseStatus = Course['status']

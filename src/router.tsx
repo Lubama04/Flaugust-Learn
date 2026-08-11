@@ -19,9 +19,12 @@ import { DashboardPage } from '@/pages/apprenant/DashboardPage'
 import { MesFormationsPage } from '@/pages/apprenant/MesFormationsPage'
 import { MesCertificatsPage } from '@/pages/apprenant/MesCertificatsPage'
 import { ProfilPage } from '@/pages/apprenant/ProfilPage'
+import { CourseReaderPage } from '@/pages/apprenant/CourseReaderPage'
 
 import { DashboardFormateurPage } from '@/pages/formateur/DashboardFormateurPage'
 import { InscriptionsPage } from '@/pages/formateur/InscriptionsPage'
+import { CourseCreatePage } from '@/pages/formateur/CourseCreatePage'
+import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
 
@@ -47,7 +50,14 @@ export const courseDetailRoute = createRoute({
   path: '/formation/$slug',
   component: CourseDetailPage,
 })
-const loginRoute = createRoute({ getParentRoute: () => publicLayoutRoute, path: '/login', component: LoginPage })
+export const loginRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/login',
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+  }),
+  component: LoginPage,
+})
 const registerRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
   path: '/inscription',
@@ -112,6 +122,26 @@ const inscriptionsRoute = createRoute({
   path: '/formateur/inscriptions',
   component: InscriptionsPage,
 })
+const courseCreateRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/formations/nouvelle',
+  component: CourseCreatePage,
+})
+export const courseEditRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/formations/$courseId/editer',
+  component: CourseEditPage,
+})
+
+// ── Lecteur de formation (immersif, sans chrome standard) ───────
+export const courseReaderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/formation/$slug/apprendre',
+  validateSearch: (search: Record<string, unknown>): { session?: string } => ({
+    session: typeof search.session === 'string' ? search.session : undefined,
+  }),
+  component: CourseReaderPage,
+})
 
 // ── Groupe ADMIN ───────────────────────────────────────────────
 const adminLayoutRoute = createRoute({
@@ -137,8 +167,14 @@ const routeTree = rootRoute.addChildren([
     profilRoute,
   ]),
   apprentLayoutRoute.addChildren([dashboardRoute, mesFormationsRoute, mesCertificatsRoute]),
-  formateurLayoutRoute.addChildren([formateurDashboardRoute, inscriptionsRoute]),
+  formateurLayoutRoute.addChildren([
+    formateurDashboardRoute,
+    inscriptionsRoute,
+    courseCreateRoute,
+    courseEditRoute,
+  ]),
   adminLayoutRoute.addChildren([adminDashboardRoute]),
+  courseReaderRoute,
 ])
 
 export const router = createRouter({

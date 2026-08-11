@@ -21,3 +21,16 @@ export function formatPrice(priceFcfa: number): string {
   if (priceFcfa === 0) return 'Gratuit'
   return `${new Intl.NumberFormat('fr-FR').format(priceFcfa)} FCFA`
 }
+
+/** Convertit un titre en slug URL (ex: "Ma Formation !" -> "ma-formation"). */
+export function slugify(input: string): string {
+  return input
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // supprime les diacritiques (accents) après décomposition NFD
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
