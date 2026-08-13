@@ -97,6 +97,7 @@ Deno.serve(async (req: Request) => {
 </body></html>`
 
   let emailSent = false
+  let resendError: string | null = null
   try {
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -109,9 +110,15 @@ Deno.serve(async (req: Request) => {
       }),
     })
     emailSent = emailRes.ok
-  } catch {
+    // Diagnostic uniquement, jamais exposé à l'apprenant (seul le formateur/admin qui a validé
+    // reçoit cette réponse) : capturer la vraie raison de l'échec Resend plutôt que de l'avaler
+    // silencieusement, sinon un échec (ex. restriction sandbox onboarding@resend.dev tant qu'aucun
+    // domaine n'est vérifié) est indiscernable d'un succès du point de vue de la validation.
+    if (!emailRes.ok) resendError = await emailRes.text()
+  } catch (err) {
     emailSent = false
+    resendError = err instanceof Error ? err.message : 'Erreur réseau inconnue'
   }
 
-  return jsonResponse({ success: true, email_sent: emailSent })
+  return jsonResponse({ success: true, email_sent: emailSent, ...(resendError ? { resend_error: resendError } : {}) })
 })
