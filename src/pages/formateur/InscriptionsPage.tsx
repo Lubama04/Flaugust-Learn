@@ -17,9 +17,12 @@ interface PendingEnrollment {
 }
 
 async function fetchPendingEnrollments(formateurId: string): Promise<PendingEnrollment[]> {
+  // enrollments a deux FK vers profiles (user_id ET validated_by) : sans préciser laquelle,
+  // PostgREST renvoie une erreur d'embed ambigu (PGRST201) — la requête échouait silencieusement
+  // côté UI (catch → liste vide affichée comme "aucune inscription en attente").
   const { data, error } = await supabase
     .from('enrollments')
-    .select('id, created_at, profiles(full_name), courses!inner(title, formateur_id)')
+    .select('id, created_at, profiles:profiles!enrollments_user_id_fkey(full_name), courses!inner(title, formateur_id)')
     .eq('status', 'en_attente')
     .eq('courses.formateur_id', formateurId)
     .order('created_at', { ascending: true })
@@ -45,10 +48,20 @@ export function InscriptionsPage() {
         .update({ status, validated_by: userId, validated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
+
+      // L'email de confirmation ne doit jamais faire échouer la validation elle-même —
+      // l'inscription est déjà passée à 'actif' au moment de cet appel.
+      if (status === 'actif') {
+        try {
+          await supabase.functions.invoke('notify-enrollment-validated', { body: { enrollment_id: id } })
+        } catch {
+          // best-effort
+        }
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['pending-enrollments'] })
-      toast.success('Inscription mise à jour')
+      toast.success(variables.status === 'actif' ? 'Inscription validée — email envoyé à l\'apprenant' : 'Inscription mise à jour')
     },
     onError: () => toast.error('Erreur lors de la mise à jour'),
   })
