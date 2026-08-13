@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Volume2, Pause, Play, Square, StickyNote } from 'lucide-react'
+import { Volume2, Pause, Play, Square, StickyNote, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,69 +22,45 @@ interface TexteCardProps {
 const RATES = [0.75, 1, 1.25, 1.5]
 const AUTO_COMPLETE_SECONDS = 60
 
-interface TtsBlock {
-  index: number
-  start: number
-  end: number
-}
-
 export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, onCompleted }: TexteCardProps) {
   const toast = useToast()
   const userId = useAuthStore((s) => s.session?.user.id)
   const contentRef = useRef<HTMLDivElement>(null)
-  const lastActiveBlockRef = useRef<number | null>(null)
   const [noteOpen, setNoteOpen] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const completedRef = useRef(isCompleted)
   completedRef.current = isCompleted
 
-  const { annotatedHtml, blocks, fullText } = useMemo(() => {
+  // Le suivi mot-par-mot n'a pas d'équivalent avec un MP3 pré-rendu (VoiceRSS, pas d'événement de
+  // limite de mot) : seul le texte brut est nécessaire pour la lecture, plus de découpage en
+  // blocs annotés.
+  const { sanitizedHtml, fullText } = useMemo(() => {
     const sanitized = DOMPurify.sanitize(contentHtml || '')
     const container = document.createElement('div')
     container.innerHTML = sanitized
-    const blockEls = Array.from(container.querySelectorAll('p, li, h1, h2, h3, h4, blockquote'))
-    const targets = blockEls.length > 0 ? blockEls : [container]
-    let offset = 0
-    const parsedBlocks: TtsBlock[] = targets.map((el, i) => {
-      const text = el.textContent ?? ''
-      el.setAttribute('data-tts-index', String(i))
-      const block = { index: i, start: offset, end: offset + text.length }
-      offset += text.length + 2
-      return block
-    })
-    return {
-      annotatedHtml: container.innerHTML,
-      blocks: parsedBlocks,
-      fullText: targets.map((el) => el.textContent ?? '').join('\n\n'),
-    }
+    return { sanitizedHtml: sanitized, fullText: container.textContent ?? '' }
   }, [contentHtml])
 
-  const highlightBlock = (index: number | null) => {
-    if (!contentRef.current) return
-    if (lastActiveBlockRef.current !== null) {
-      contentRef.current
-        .querySelector(`[data-tts-index="${lastActiveBlockRef.current}"]`)
-        ?.classList.remove('tts-highlight')
-    }
-    if (index !== null) {
-      contentRef.current.querySelector(`[data-tts-index="${index}"]`)?.classList.add('tts-highlight')
-    }
-    lastActiveBlockRef.current = index
-  }
+  const {
+    isPlaying,
+    isPaused,
+    isLoading,
+    isSupported,
+    rate,
+    gender,
+    error: ttsError,
+    speak,
+    pause,
+    resume,
+    stop,
+    changeRate,
+    changeGender,
+  } = useTTS()
 
-  const { isPlaying, isPaused, isSupported, rate, gender, speak, pause, resume, stop, changeRate, changeGender } =
-    useTTS({
-      onBoundary: (charIndex) => {
-        const current = blocks.find((b) => charIndex >= b.start && charIndex < b.end)
-        highlightBlock(current?.index ?? null)
-      },
-    })
-
-  const handleStop = () => {
-    stop()
-    highlightBlock(null)
-  }
+  useEffect(() => {
+    if (ttsError) toast.error(ttsError)
+  }, [ttsError, toast])
 
   const markCompleted = async () => {
     if (completedRef.current) return
@@ -102,7 +78,7 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
     if (isCompleted) return
     const timer = setTimeout(() => void markCompleted(), AUTO_COMPLETE_SECONDS * 1000)
 
-    const lastEl = contentRef.current?.querySelector('[data-tts-index]:last-of-type')
+    const lastEl = contentRef.current?.querySelector('p:last-of-type, li:last-of-type, :scope > *:last-child')
     let observer: IntersectionObserver | null = null
     if (lastEl) {
       observer = new IntersectionObserver(
@@ -145,8 +121,16 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
         {isSupported && (
           <div className="flex flex-wrap items-center gap-2 rounded-lg bg-lightGray p-2">
             {!isPlaying && !isPaused && (
-              <Button size="sm" variant="outline" onClick={() => speak(fullText)}>
-                <Volume2 className="mr-2 h-4 w-4" /> Écouter
+              <Button size="sm" variant="outline" onClick={() => speak(fullText)} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Chargement…
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="mr-2 h-4 w-4" /> Écouter
+                  </>
+                )}
               </Button>
             )}
             {isPlaying && (
@@ -160,7 +144,7 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
               </Button>
             )}
             {(isPlaying || isPaused) && (
-              <Button size="sm" variant="ghost" onClick={handleStop}>
+              <Button size="sm" variant="ghost" onClick={stop}>
                 <Square className="mr-2 h-4 w-4" /> Stop
               </Button>
             )}
@@ -211,8 +195,11 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
 
         <div
           ref={contentRef}
-          className="prose prose-sm max-w-none text-dark [&_.tts-highlight]:rounded [&_.tts-highlight]:bg-[#FEF9C3] [&_.tts-highlight]:transition-colors"
-          dangerouslySetInnerHTML={{ __html: annotatedHtml }}
+          className={cn(
+            'prose prose-sm max-w-none text-dark transition-opacity duration-1000',
+            isPlaying && 'animate-pulse'
+          )}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
 
         <div className="border-t border-gray-100 pt-4">

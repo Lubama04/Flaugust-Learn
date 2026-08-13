@@ -1,22 +1,20 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export type TTSGender = 'female' | 'male'
 
-interface TTSOptions {
-  lang?: string
-  onBoundary?: (charIndex: number) => void
-}
-
 const RATE_STORAGE_KEY = 'tts_rate'
 const GENDER_STORAGE_KEY = 'tts_gender'
-// Bug Chrome connu et non corrigé depuis des années : speechSynthesis se coupe silencieusement
-// après ~15s sur les lectures longues. Un pause()/resume() périodique pendant la lecture
-// réinitialise le minuteur interne du moteur, sans effet audible pour l'utilisateur.
-const CHROME_KEEPALIVE_MS = 10_000
-// Repli par sondage pour les navigateurs (notamment certains WebView Android) qui ne déclenchent
-// jamais 'voiceschanged' de façon fiable.
-const VOICE_POLL_MS = 300
-const VOICE_POLL_TIMEOUT_MS = 3000
+
+// VoiceRSS (comme la plupart des API TTS à quota) peut refuser ou tronquer les textes trop longs,
+// et une session de cours complète dépasse largement une seule requête raisonnable. Le texte est
+// donc découpé en morceaux lus séquentiellement plutôt que tronqué silencieusement.
+const MAX_CHUNK_CHARS = 1500
+
+// WAV silencieux d'un seul échantillon, utilisé uniquement pour "débloquer" la lecture audio sur
+// iOS/Safari (voir plus bas).
+const SILENT_AUDIO_SRC =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
 
 function readStoredRate(): number {
   const stored = localStorage.getItem(RATE_STORAGE_KEY)
@@ -28,178 +26,280 @@ function readStoredGender(): TTSGender {
   return localStorage.getItem(GENDER_STORAGE_KEY) === 'male' ? 'male' : 'female'
 }
 
-const FEMALE_VOICE_PATTERN = /female|femme|woman|fiona|amelie|amélie|marie|claire|julie|audrey|hortense/i
-const MALE_VOICE_PATTERN = /male|homme|man|thomas|nicolas|pierre|jean|daniel|paul|guillaume|antoine|henri/i
+// Découpe le texte en morceaux d'environ MAX_CHUNK_CHARS caractères sans jamais couper au milieu
+// d'une phrase (limite de taille par requête côté edge function/VoiceRSS ; couper au milieu d'un
+// mot produirait aussi un silence audible désagréable entre deux morceaux).
+function chunkText(text: string): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [text]
+  const chunks: string[] = []
+  let current = ''
+  for (const rawSentence of sentences) {
+    const sentence = rawSentence.trim()
+    if (!sentence) continue
+    if (sentence.length > MAX_CHUNK_CHARS) {
+      if (current) {
+        chunks.push(current)
+        current = ''
+      }
+      // Phrase à elle seule plus longue que la limite : découpage brut en dernier recours.
+      for (let i = 0; i < sentence.length; i += MAX_CHUNK_CHARS) {
+        chunks.push(sentence.slice(i, i + MAX_CHUNK_CHARS))
+      }
+      continue
+    }
+    const candidate = current ? `${current} ${sentence}` : sentence
+    if (candidate.length > MAX_CHUNK_CHARS) {
+      chunks.push(current)
+      current = sentence
+    } else {
+      current = candidate
+    }
+  }
+  if (current) chunks.push(current)
+  return chunks.length > 0 ? chunks : [text]
+}
 
 /**
- * Hook Text-to-Speech basé sur la Web Speech API du navigateur.
+ * Hook Text-to-Speech basé sur VoiceRSS (API tierce, MP3 réel) au lieu de la Web Speech API du
+ * navigateur, qui ne produisait aucun son sur Chrome (politique audio bloquant la synthèse).
+ * L'edge function `tts-voicerss` proxifie l'appel (clé VoiceRSS gardée côté serveur) et renvoie
+ * un flux audio/mpeg ; ce hook le convertit en Blob URL et le joue via un élément <audio> natif.
  *
- * Cause du bug "aucun son sur aucun appareil" : sur la plupart des navigateurs (Chrome, Safari,
- * la majorité des Android), la liste des voix (speechSynthesis.getVoices()) est peuplée de façon
- * asynchrone après le chargement de la page. La version précédente rappelait getVoices() à
- * l'intérieur même de speak(), sans jamais attendre cette initialisation : un premier clic sur
- * "Écouter" (le cas le plus courant) obtenait alors utterance.voice non défini ou lié à une voix
- * pas encore réellement initialisée côté moteur. Dans cet état, le moteur avance quand même dans
- * le cycle de vie de la lecture (onstart, onboundary, onend se déclenchent normalement — d'où
- * l'illusion d'une lecture qui progresse) mais ne produit aucun son. La liste des voix est
- * désormais chargée une fois via voiceschanged + sondage de repli, et mise en cache.
+ * Le texte est découpé en morceaux (voir chunkText) et lus séquentiellement sur un seul élément
+ * <audio> réutilisé d'un morceau à l'autre — réutiliser le même élément (plutôt que d'en créer un
+ * par morceau) est ce qui permet à Safari/iOS d'autoriser les lectures suivantes déclenchées de
+ * façon asynchrone après la première, initiée de façon synchrone dans le geste utilisateur.
+ *
+ * Le suivi mot-par-mot (onBoundary) de l'ancienne implémentation Web Speech API n'a pas
+ * d'équivalent avec un MP3 pré-rendu (aucun événement de limite de mot) : il est remplacé côté
+ * TexteCard par une simple pulsation visuelle pendant la lecture.
  */
-export function useTTS(options: TTSOptions = {}) {
+export function useTTS() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [isSupported, setIsSupported] = useState(false)
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSupported] = useState(() => typeof window !== 'undefined' && typeof Audio !== 'undefined')
   const [rate, setRate] = useState(readStoredRate)
   const [gender, setGender] = useState<TTSGender>(readStoredGender)
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
-  const optionsRef = useRef(options)
-  optionsRef.current = options
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-    setIsSupported(true)
-
-    const loadVoices = () => {
-      const available = window.speechSynthesis.getVoices()
-      if (available.length > 0) setVoices(available)
-    }
-    loadVoices()
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
-    const pollId = setInterval(loadVoices, VOICE_POLL_MS)
-    const pollTimeout = setTimeout(() => clearInterval(pollId), VOICE_POLL_TIMEOUT_MS)
-
-    return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
-      clearInterval(pollId)
-      clearTimeout(pollTimeout)
-    }
-  }, [])
-
-  const getVoice = useCallback(
-    (preferredGender: TTSGender): SpeechSynthesisVoice | null => {
-      if (voices.length === 0) return null
-      const frVoices = voices.filter((v) => v.lang.toLowerCase().startsWith('fr'))
-      // À défaut de voix française installée sur l'appareil, mieux vaut une voix dans une autre
-      // langue que pas de voix du tout (utterance.voice non défini a précisément causé le bug).
-      const pool = frVoices.length > 0 ? frVoices : voices
-      const pattern = preferredGender === 'female' ? FEMALE_VOICE_PATTERN : MALE_VOICE_PATTERN
-      return pool.find((v) => pattern.test(v.name)) ?? pool[0] ?? null
-    },
-    [voices]
-  )
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const chunksRef = useRef<string[]>([])
+  const chunkIndexRef = useRef(0)
+  const blobUrlsRef = useRef<Map<number, string>>(new Map())
+  const stoppedRef = useRef(true)
+  const rateRef = useRef(rate)
+  const genderRef = useRef(gender)
+  rateRef.current = rate
+  genderRef.current = gender
 
   const stop = useCallback(() => {
-    window.speechSynthesis.cancel()
+    stoppedRef.current = true
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+    }
+    blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+    blobUrlsRef.current.clear()
+    chunksRef.current = []
+    chunkIndexRef.current = 0
+    setIsLoading(false)
     setIsPlaying(false)
     setIsPaused(false)
-    utteranceRef.current = null
   }, [])
 
-  // speak() reste entièrement synchrone (aucun await/setTimeout/Promise avant l'appel à
-  // window.speechSynthesis.speak()) : sur iOS/Safari, tout appel asynchrone intercalé entre le
-  // geste utilisateur et speak() empêche la lecture.
+  const fetchChunkBlobUrl = useCallback(async (text: string): Promise<string> => {
+    const { data, error: fnError } = await supabase.functions.invoke('tts-voicerss', {
+      body: { text, gender: genderRef.current },
+    })
+    if (fnError) {
+      let message = 'Erreur lors de la génération audio'
+      const context = (fnError as { context?: Response }).context
+      if (context) {
+        try {
+          const body = (await context.clone().json()) as { error?: string }
+          if (body?.error) message = body.error
+        } catch {
+          // Réponse d'erreur non-JSON : on garde le message générique.
+        }
+      }
+      throw new Error(message)
+    }
+    if (!(data instanceof Blob)) throw new Error('Réponse audio invalide')
+    return URL.createObjectURL(data)
+  }, [])
+
+  const playFrom = useCallback(
+    async (index: number) => {
+      if (stoppedRef.current) return
+      const chunks = chunksRef.current
+      const audio = audioRef.current
+      if (!audio) return
+
+      if (index >= chunks.length) {
+        // Lecture terminée naturellement (dernier morceau joué en entier).
+        stop()
+        return
+      }
+      chunkIndexRef.current = index
+
+      const currentChunk = chunks[index]
+      if (currentChunk === undefined) return
+
+      let url = blobUrlsRef.current.get(index)
+      if (!url) {
+        setIsLoading(true)
+        try {
+          url = await fetchChunkBlobUrl(currentChunk)
+        } catch (err) {
+          if (stoppedRef.current) return
+          setError(err instanceof Error ? err.message : 'Erreur lors de la génération audio')
+          setIsLoading(false)
+          setIsPlaying(false)
+          setIsPaused(false)
+          return
+        }
+        if (stoppedRef.current) return
+        blobUrlsRef.current.set(index, url)
+      }
+
+      audio.src = url
+      audio.currentTime = 0
+      audio.playbackRate = rateRef.current
+      try {
+        await audio.play()
+      } catch (err) {
+        if (stoppedRef.current) return
+        setError(err instanceof Error ? err.message : 'Lecture audio bloquée par le navigateur')
+        setIsLoading(false)
+        setIsPlaying(false)
+        setIsPaused(false)
+        return
+      }
+      if (stoppedRef.current) return
+      setIsLoading(false)
+      setIsPlaying(true)
+      setIsPaused(false)
+
+      // Précharge le morceau suivant pendant la lecture du morceau courant, pour limiter le
+      // silence entre deux morceaux. Échec silencieux : une nouvelle tentative aura lieu au
+      // moment de la lecture réelle de ce morceau, dans le bloc ci-dessus.
+      const nextIndex = index + 1
+      const nextChunk = chunks[nextIndex]
+      if (nextChunk !== undefined && !blobUrlsRef.current.has(nextIndex)) {
+        fetchChunkBlobUrl(nextChunk)
+          .then((nextUrl) => {
+            if (!stoppedRef.current) blobUrlsRef.current.set(nextIndex, nextUrl)
+          })
+          .catch(() => {})
+      }
+    },
+    [stop, fetchChunkBlobUrl]
+  )
+
   const speak = useCallback(
     (text: string) => {
       if (!isSupported) return
       const cleanText = text.replace(/\s+/g, ' ').trim()
       if (!cleanText) return
 
-      window.speechSynthesis.cancel()
+      stop()
+      stoppedRef.current = false
+      setError(null)
+      chunksRef.current = chunkText(cleanText)
+      chunkIndexRef.current = 0
 
-      const utterance = new SpeechSynthesisUtterance(cleanText)
-      utterance.lang = optionsRef.current.lang ?? 'fr-FR'
-      utterance.rate = rate
-      utterance.volume = 1
-      utterance.pitch = gender === 'female' ? 1.05 : 0.9
-      const voice = getVoice(gender)
-      if (voice) utterance.voice = voice
+      if (!audioRef.current) {
+        const audio = new Audio()
+        audio.onended = () => {
+          if (stoppedRef.current) return
+          void playFrom(chunkIndexRef.current + 1)
+        }
+        audio.onerror = () => {
+          if (stoppedRef.current) return
+          setError('Erreur de lecture audio')
+          setIsLoading(false)
+          setIsPlaying(false)
+          setIsPaused(false)
+        }
+        audioRef.current = audio
+      }
+      const audio = audioRef.current
+      audio.playbackRate = rateRef.current
 
-      utterance.onboundary = (event) => {
-        optionsRef.current.onBoundary?.(event.charIndex)
-      }
-      utterance.onstart = () => {
-        setIsPlaying(true)
-        setIsPaused(false)
-      }
-      utterance.onend = () => {
-        setIsPlaying(false)
-        setIsPaused(false)
-        utteranceRef.current = null
-      }
-      utterance.onerror = (event) => {
-        // 'interrupted'/'canceled' sont normaux (déclenchés par notre propre cancel() ci-dessus
-        // ou par un stop() utilisateur) : pas une vraie erreur à traiter différemment.
-        void event
-        setIsPlaying(false)
-        setIsPaused(false)
-        utteranceRef.current = null
-      }
+      // Débloque la lecture audio sur iOS/Safari : le premier play() doit survenir de façon
+      // synchrone dans le gestionnaire de clic. Jouer un silence immédiatement associe cet
+      // élément <audio> au geste utilisateur, ce qui autorise les appels .play() suivants
+      // (déclenchés de façon asynchrone une fois le MP3 récupéré, puis à chaque morceau
+      // suivant depuis onended) sur ce même élément.
+      audio.src = SILENT_AUDIO_SRC
+      void audio.play().catch(() => {})
 
-      // Conserver une référence forte à l'utterance : sans elle, certains Chrome la
-      // garbage-collectent et coupent la synthèse en cours.
-      utteranceRef.current = utterance
-      window.speechSynthesis.speak(utterance)
-      // Retour visuel immédiat ; onend/onerror corrigent l'état si la lecture ne démarre pas.
-      setIsPlaying(true)
-      setIsPaused(false)
+      void playFrom(0)
     },
-    [isSupported, rate, gender, getVoice]
+    [isSupported, stop, playFrom]
   )
 
   const pause = useCallback(() => {
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause()
+    const audio = audioRef.current
+    if (audio && isPlaying) {
+      audio.pause()
       setIsPaused(true)
       setIsPlaying(false)
     }
-  }, [])
+  }, [isPlaying])
 
   const resume = useCallback(() => {
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume()
+    const audio = audioRef.current
+    if (audio && isPaused) {
+      void audio.play().catch(() => {
+        setError('Lecture audio bloquée par le navigateur')
+      })
       setIsPaused(false)
       setIsPlaying(true)
     }
-  }, [])
+  }, [isPaused])
 
-  const changeRate = useCallback(
-    (newRate: number) => {
-      setRate(newRate)
-      localStorage.setItem(RATE_STORAGE_KEY, String(newRate))
-      if (isPlaying || isPaused) stop()
-    },
-    [isPlaying, isPaused, stop]
-  )
+  const changeRate = useCallback((newRate: number) => {
+    setRate(newRate)
+    rateRef.current = newRate
+    localStorage.setItem(RATE_STORAGE_KEY, String(newRate))
+    // Contrairement à la Web Speech API, playbackRate d'un élément <audio> peut être changé en
+    // direct sans interrompre la lecture en cours.
+    if (audioRef.current) audioRef.current.playbackRate = newRate
+  }, [])
 
   const changeGender = useCallback(
     (newGender: TTSGender) => {
       setGender(newGender)
+      genderRef.current = newGender
       localStorage.setItem(GENDER_STORAGE_KEY, newGender)
-      if (isPlaying || isPaused) stop()
+      // Les morceaux déjà générés/en cache correspondent à l'ancienne voix : on ne peut pas les
+      // réutiliser, la lecture en cours est interrompue (même comportement que l'ancien hook Web
+      // Speech API, qui stoppait déjà la lecture sur un changement de voix).
+      stop()
     },
-    [isPlaying, isPaused, stop]
+    [stop]
   )
 
-  // Palliatif au bug Chrome des lectures longues coupées en silence (voir CHROME_KEEPALIVE_MS).
   useEffect(() => {
-    if (!isPlaying) return
-    const interval = setInterval(() => {
-      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-        window.speechSynthesis.pause()
-        window.speechSynthesis.resume()
-      }
-    }, CHROME_KEEPALIVE_MS)
-    return () => clearInterval(interval)
-  }, [isPlaying])
-
-  useEffect(() => () => window.speechSynthesis.cancel(), [])
+    return () => {
+      stoppedRef.current = true
+      audioRef.current?.pause()
+      blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [])
 
   return {
     isPlaying,
     isPaused,
+    isLoading,
     isSupported,
     rate,
     gender,
+    error,
     speak,
     pause,
     resume,
