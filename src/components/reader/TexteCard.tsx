@@ -49,7 +49,6 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
     isSupported,
     rate,
     gender,
-    error: ttsError,
     speak,
     pause,
     resume,
@@ -57,10 +56,6 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
     changeRate,
     changeGender,
   } = useTTS()
-
-  useEffect(() => {
-    if (ttsError) toast.error(ttsError)
-  }, [ttsError, toast])
 
   const markCompleted = async () => {
     if (completedRef.current) return
