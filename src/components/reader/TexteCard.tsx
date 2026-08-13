@@ -73,12 +73,13 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
     lastActiveBlockRef.current = index
   }
 
-  const { isPlaying, isPaused, isSupported, rate, speak, pause, resume, stop, changeRate } = useTTS({
-    onBoundary: (charIndex) => {
-      const current = blocks.find((b) => charIndex >= b.start && charIndex < b.end)
-      highlightBlock(current?.index ?? null)
-    },
-  })
+  const { isPlaying, isPaused, isSupported, rate, gender, speak, pause, resume, stop, changeRate, changeGender } =
+    useTTS({
+      onBoundary: (charIndex) => {
+        const current = blocks.find((b) => charIndex >= b.start && charIndex < b.end)
+        highlightBlock(current?.index ?? null)
+      },
+    })
 
   const handleStop = () => {
     stop()
@@ -163,6 +164,33 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
                 <Square className="mr-2 h-4 w-4" /> Stop
               </Button>
             )}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => changeGender('female')}
+                className={cn(
+                  'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                  gender === 'female'
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-gray-200 text-gray hover:bg-white'
+                )}
+              >
+                👩 Voix féminine
+              </button>
+              <button
+                type="button"
+                onClick={() => changeGender('male')}
+                className={cn(
+                  'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                  gender === 'male'
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-gray-200 text-gray hover:bg-white'
+                )}
+              >
+                👨 Voix masculine
+              </button>
+            </div>
+
             <div className="ml-auto flex items-center gap-1">
               {RATES.map((r) => (
                 <button
