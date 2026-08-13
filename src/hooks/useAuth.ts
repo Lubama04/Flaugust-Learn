@@ -31,17 +31,20 @@ export function useAuthListener() {
 interface SignUpParams {
   fullName: string
   email: string
+  phone?: string
   password: string
-  role: Extract<UserRole, 'apprenant' | 'formateur'>
 }
 
-export async function signUp({ fullName, email, password, role }: SignUpParams) {
-  // Le rôle et le nom sont passés en metadata ; repris par le trigger SQL handle_new_user().
+export async function signUp({ fullName, email, phone, password }: SignUpParams) {
+  // Le nom et le téléphone sont passés en metadata ; repris par le trigger SQL
+  // handle_new_user(). Le rôle n'est jamais envoyé depuis le client : tout nouvel inscrit est
+  // 'apprenant' par défaut côté serveur (handle_new_user l'impose, indépendamment de ce que
+  // contiendrait raw_user_meta_data) — devenir formateur passe par une promotion admin.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName, role },
+      data: { full_name: fullName, phone: phone || undefined },
       emailRedirectTo: `${window.location.origin}/login`,
     },
   })

@@ -8,13 +8,23 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import type { SidebarLink } from '@/components/layout/DashboardSidebar'
 
 const NAV_LINKS = [
   { to: '/', label: 'Accueil' },
   { to: '/catalogue', label: 'Catalogue' },
 ] as const
 
-export function Navbar() {
+interface NavbarProps {
+  /**
+   * Liens du tableau de bord (mêmes que la DashboardSidebar du layout appelant), affichés
+   * dans le menu mobile — sans eux, la navigation dashboard (Mes formations, Inscriptions,
+   * Utilisateurs…) est invisible sous md:, la sidebar étant `hidden md:flex`.
+   */
+  dashboardLinks?: SidebarLink[]
+}
+
+export function Navbar({ dashboardLinks }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
@@ -111,12 +121,28 @@ export function Navbar() {
           ))}
           {session && profile ? (
             <>
-              <Link to={dashboardPathForRole(profile.role)} className="text-sm font-medium text-dark" onClick={() => setMenuOpen(false)}>
-                Tableau de bord
-              </Link>
-              <Link to="/profil" className="text-sm font-medium text-dark" onClick={() => setMenuOpen(false)}>
-                Mon profil
-              </Link>
+              {dashboardLinks && dashboardLinks.length > 0 ? (
+                dashboardLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="flex items-center gap-2 text-sm font-medium text-dark"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <link.icon className="h-4 w-4" aria-hidden="true" />
+                    {link.label}
+                  </Link>
+                ))
+              ) : (
+                <Link to={dashboardPathForRole(profile.role)} className="text-sm font-medium text-dark" onClick={() => setMenuOpen(false)}>
+                  Tableau de bord
+                </Link>
+              )}
+              {!dashboardLinks?.some((link) => link.to === '/profil') && (
+                <Link to="/profil" className="text-sm font-medium text-dark" onClick={() => setMenuOpen(false)}>
+                  Mon profil
+                </Link>
+              )}
               <Button variant="outline" onClick={handleSignOut}>
                 Se déconnecter
               </Button>

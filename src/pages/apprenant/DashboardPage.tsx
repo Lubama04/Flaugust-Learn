@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { BookOpen, Award, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -13,7 +14,7 @@ async function fetchMyEnrollments(userId: string) {
   // status='complete' les excluait auparavant d'un filtre status='actif' trop strict).
   const { data, error } = await supabase
     .from('enrollments')
-    .select('*, courses(title, duration_hours)')
+    .select('*, courses(title, slug, duration_hours)')
     .eq('user_id', userId)
     .in('status', ['actif', 'complete'])
   if (error) throw error
@@ -77,22 +78,23 @@ export function DashboardPage() {
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {inProgress.map((e) => (
-              <Card key={e.id}>
-                <CardContent className="pt-6">
-                  <p className="font-medium text-dark">
-                    {(e as { courses?: { title?: string } }).courses?.title}
-                  </p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-gray-100">
-                    <div
-                      className="h-2 rounded-full bg-lime"
-                      style={{ width: `${e.progress_pct}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-gray">{e.progress_pct}% complété</p>
-                </CardContent>
-              </Card>
-            ))}
+            {inProgress.map((e) => {
+              const course = (e as { courses?: { title?: string; slug?: string } }).courses
+              if (!course?.slug) return null
+              return (
+                <Link key={e.id} to="/formation/$slug/apprendre" params={{ slug: course.slug }} className="block h-full">
+                  <Card className="h-full transition-shadow hover:shadow-md">
+                    <CardContent className="pt-6">
+                      <p className="font-medium text-dark">{course.title}</p>
+                      <div className="mt-3 h-2 w-full rounded-full bg-gray-100">
+                        <div className="h-2 rounded-full bg-lime" style={{ width: `${e.progress_pct}%` }} />
+                      </div>
+                      <p className="mt-1 text-xs text-gray">{e.progress_pct}% complété</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
           </div>
         )}
       </section>

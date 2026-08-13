@@ -21,7 +21,6 @@ export function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'apprenant' },
   })
 
   const onSubmit = async (values: RegisterInput) => {
@@ -30,8 +29,8 @@ export function RegisterPage() {
       await signUp({
         fullName: values.fullName,
         email: values.email,
+        phone: values.phone,
         password: values.password,
-        role: values.role,
       })
       setRegistered(true)
     } catch (error) {
@@ -81,6 +80,12 @@ export function RegisterPage() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="phone">Numéro de téléphone (optionnel)</Label>
+          <Input id="phone" type="tel" autoComplete="tel" placeholder="+235 XX XX XX XX" {...register('phone')} />
+          {errors.phone && <p className="text-sm text-red-600">{errors.phone.message}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="password">Mot de passe</Label>
           <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
           {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
@@ -97,18 +102,6 @@ export function RegisterPage() {
           {errors.confirmPassword && (
             <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
           )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="role">Je m'inscris en tant que</Label>
-          <select
-            id="role"
-            {...register('role')}
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark"
-          >
-            <option value="apprenant">Apprenant</option>
-            <option value="formateur">Formateur</option>
-          </select>
         </div>
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

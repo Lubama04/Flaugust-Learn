@@ -15,7 +15,7 @@ export function ApprentLayout() {
   return (
     <ProtectedRoute allowedRoles={['apprenant', 'admin']}>
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        <Navbar dashboardLinks={LINKS} />
         <div className="flex flex-1">
           <DashboardSidebar links={LINKS} roleLabel="Espace apprenant" />
           <main className="flex-1 bg-lightGray/50 p-6">

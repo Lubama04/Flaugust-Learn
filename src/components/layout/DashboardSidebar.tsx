@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface SidebarLink {
@@ -14,15 +13,15 @@ interface DashboardSidebarProps {
   roleLabel: string
 }
 
-/** Barre latérale partagée par les layouts protégés (apprenant / formateur / admin). */
+/**
+ * Barre latérale partagée par les layouts protégés (apprenant / formateur / admin).
+ * Le logo/titre "FlaugustLearn" vit uniquement dans la Navbar (déjà présente au-dessus dans
+ * chaque layout connecté) — le répéter ici créait un doublon visuel à chaque page dashboard.
+ */
 export function DashboardSidebar({ links, roleLabel }: DashboardSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-gray-100 bg-white md:flex md:flex-col">
-      <div className="flex h-16 items-center gap-2 border-b border-gray-100 px-6 font-display text-lg font-bold text-primary">
-        <GraduationCap className="h-6 w-6" aria-hidden="true" />
-        FlaugustLearn
-      </div>
-      <div className="px-6 pt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
+      <div className="flex h-16 items-center border-b border-gray-100 px-6 text-xs font-semibold uppercase tracking-wide text-gray-400">
         {roleLabel}
       </div>
       <nav className="flex flex-1 flex-col gap-1 p-4">

@@ -1,7 +1,27 @@
 import { Link } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { Award, Smartphone, ShieldCheck, Volume2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { CourseCard } from '@/components/course/CourseCard'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+
+const FEATURED_COUNT = 3
+
+async function fetchFeaturedCourses() {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*, profiles!courses_formateur_id_fkey(full_name)')
+    .eq('status', 'publie')
+    .order('enrolled_count', { ascending: false })
+    .limit(FEATURED_COUNT)
+  if (error) throw error
+  return data.map((c) => ({
+    ...c,
+    formateur_name: (c as unknown as { profiles?: { full_name?: string } }).profiles?.full_name ?? null,
+  }))
+}
 
 const FEATURES = [
   {
@@ -33,6 +53,11 @@ const STATS = [
 ]
 
 export function HomePage() {
+  const { data: featuredCourses, isLoading } = useQuery({
+    queryKey: ['courses', 'featured'],
+    queryFn: fetchFeaturedCourses,
+  })
+
   return (
     <div>
       {/* Hero */}
@@ -58,22 +83,41 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Formations en vedette */}
+      {/* Nos formations */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h2 className="text-center text-2xl font-bold text-dark">Formations en vedette</h2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="overflow-hidden">
-              <div className="flex h-40 items-center justify-center bg-lightGray text-gray-300">
-                <span className="text-sm">Bientôt disponible</span>
-              </div>
-              <CardContent className="pt-6">
-                <div className="h-4 w-3/4 rounded bg-gray-100" />
-                <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <h2 className="text-center text-2xl font-bold text-dark">Nos formations</h2>
+        {isLoading ? (
+          <div className="mt-8">
+            <LoadingSpinner label="Chargement des formations…" />
+          </div>
+        ) : featuredCourses && featuredCourses.length > 0 ? (
+          <>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+            <div className="mt-10 text-center">
+              <Link to="/catalogue">
+                <Button variant="outline">Voir toutes les formations</Button>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <div className="flex h-40 items-center justify-center bg-lightGray text-gray-300">
+                  <span className="text-sm">Bientôt disponible</span>
+                </div>
+                <CardContent className="pt-6">
+                  <div className="h-4 w-3/4 rounded bg-gray-100" />
+                  <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Pourquoi FlaugustLearn */}
