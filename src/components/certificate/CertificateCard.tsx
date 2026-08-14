@@ -17,7 +17,7 @@ export function CertificateCard({ certificate }: CertificateCardProps) {
           <div className="flex-1">
             <p className="font-medium text-dark">{certificate.course_title || certificate.courses?.title}</p>
             <p className="text-sm text-gray">
-              Délivré le {formatDate(certificate.issued_at)} — Score {certificate.final_score}%
+              Délivré le {formatDate(certificate.issued_at)}, score {certificate.final_score}%
             </p>
           </div>
           <ExternalLink className="h-4 w-4 shrink-0 text-gray-300" aria-hidden="true" />

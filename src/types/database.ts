@@ -766,6 +766,65 @@ export type Database = {
           },
         ]
       }
+      learner_worksheets: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          id: string
+          last_saved_at: string
+          session_id: string
+          user_id: string
+          worksheet_data: Json
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          last_saved_at?: string
+          session_id: string
+          user_id: string
+          worksheet_data?: Json
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          last_saved_at?: string
+          session_id?: string
+          user_id?: string
+          worksheet_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_worksheets_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollment_progress_view"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "learner_worksheets_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learner_worksheets_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learner_worksheets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           course_id: string
@@ -1180,6 +1239,7 @@ export type Database = {
           title: string
           type: Database["public"]["Enums"]["session_type"]
           updated_at: string
+          worksheet_schema: Json | null
         }
         Insert: {
           content_text?: string | null
@@ -1195,6 +1255,7 @@ export type Database = {
           title: string
           type?: Database["public"]["Enums"]["session_type"]
           updated_at?: string
+          worksheet_schema?: Json | null
         }
         Update: {
           content_text?: string | null
@@ -1210,6 +1271,7 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["session_type"]
           updated_at?: string
+          worksheet_schema?: Json | null
         }
         Relationships: [
           {
@@ -1269,6 +1331,7 @@ export type Database = {
           verify_token: string
         }[]
       }
+      get_platform_stats: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_enrolled: { Args: { p_course_id: string }; Returns: boolean }
       is_formateur: { Args: never; Returns: boolean }

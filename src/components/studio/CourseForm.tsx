@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/studio/RichTextEditor'
 import type { Course } from '@/types'
 
 const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024
@@ -56,6 +57,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
   const userId = useAuthStore((s) => s.session?.user.id)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [thumbnailUrl, setThumbnailUrl] = useState(course?.thumbnail_url ?? null)
+  const [descriptionHtml, setDescriptionHtml] = useState(course?.description ?? '')
 
   const {
     register,
@@ -67,7 +69,6 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
     defaultValues: {
       title: course?.title ?? '',
       shortDescription: course?.short_description ?? '',
-      description: course?.description ?? '',
       level: (course?.level as CourseFormInput['level']) ?? 'debutant',
       language: course?.language ?? 'fr',
       durationHours: course?.duration_hours ?? 0,
@@ -87,7 +88,6 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
     reset({
       title: course.title,
       shortDescription: course.short_description,
-      description: course.description,
       level: course.level as CourseFormInput['level'],
       language: course.language,
       durationHours: course.duration_hours,
@@ -101,15 +101,22 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
       prerequisites: course.prerequisites.join('\n'),
     })
     setThumbnailUrl(course.thumbnail_url)
+    setDescriptionHtml(course.description)
   }, [course, reset])
 
   const onSubmit = async (values: CourseFormInput) => {
     if (!userId) return
 
+    const descriptionText = descriptionHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    if (descriptionText.length < 20) {
+      toast.error('Description trop courte (20 caractères min.)')
+      return
+    }
+
     const payload = {
       title: values.title,
       short_description: values.shortDescription,
-      description: values.description,
+      description: descriptionHtml,
       level: values.level,
       language: values.language,
       duration_hours: values.durationHours,
@@ -142,7 +149,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
           .select()
           .single()
         if (error) throw error
-        toast.success('Formation créée — vous pouvez maintenant ajouter des modules')
+        toast.success('Formation créée, vous pouvez maintenant ajouter des modules')
         onSaved(data)
       }
     } catch {
@@ -231,9 +238,8 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description complète</Label>
-        <Textarea id="description" rows={5} {...register('description')} />
-        {errors.description && <p className="text-sm text-red-600">{errors.description.message}</p>}
+        <Label>Description complète</Label>
+        <RichTextEditor content={descriptionHtml} onChange={setDescriptionHtml} placeholder="Décrivez la formation en détail..." />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

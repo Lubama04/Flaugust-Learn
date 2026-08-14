@@ -30,7 +30,7 @@ export function ReponseCourteBuilder({ questions, onChange }: ReponseCourteBuild
     <div className="space-y-3">
       <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-xs text-accent">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        Les réponses courtes ne sont pas corrigées automatiquement — elles nécessitent une
+        Les réponses courtes ne sont pas corrigées automatiquement, elles nécessitent une
         relecture manuelle (fonctionnalité à venir).
       </div>
       {questions.map((q, i) => (

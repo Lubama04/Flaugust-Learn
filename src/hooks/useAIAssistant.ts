@@ -33,7 +33,7 @@ export function useAIAssistant() {
 
   const ask = useCallback(async (action: AIAction, payload: Record<string, unknown>): Promise<string> => {
     if (!canAsk()) {
-      const message = 'Trop de requêtes — merci de patienter une minute avant de reposer une question.'
+      const message = 'Trop de requêtes, merci de patienter une minute avant de reposer une question.'
       setError(message)
       throw new Error(message)
     }

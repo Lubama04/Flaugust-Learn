@@ -45,7 +45,7 @@ function generateCertificateHTML(data: CertificateData): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Certificat — ${courseName}</title>
+<title>Certificat : ${courseName}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,7 +168,7 @@ function generateCertificateHTML(data: CertificateData): string {
     <div class="signature-block">
       <div class="signature-line"></div>
       <div class="signature-name">LUBAMA Jean Chrysostome ZACEI</div>
-      <div class="signature-title">Directeur Général — Flaugust Business</div>
+      <div class="signature-title">Directeur Général, Flaugust Business</div>
     </div>
     <div class="verify-block">
       <div class="verify-label">Vérifier ce certificat</div>
@@ -364,7 +364,7 @@ Deno.serve(async (req: Request) => {
     </div>
   </div>
   <div style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #eee">
-    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn — Flaugust Business | Réflexion — Action — Impact</p>
+    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn, Flaugust Business | Réflexion, Action, Impact</p>
   </div>
 </div>
 </body></html>`
@@ -376,7 +376,7 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             from: 'FlaugustLearn <onboarding@resend.dev>',
             to: [enrollment.student.email],
-            subject: `🎓 Votre certificat — ${enrollment.course.title}`,
+            subject: `🎓 Votre certificat : ${enrollment.course.title}`,
             html: emailHtml,
           }),
         })

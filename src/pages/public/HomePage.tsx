@@ -1,11 +1,13 @@
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Award, Smartphone, ShieldCheck, Volume2 } from 'lucide-react'
+import CountUp from 'react-countup'
+import { Award, Smartphone, ShieldCheck, Volume2, BookOpen, Users, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CourseCard } from '@/components/course/CourseCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import type { PlatformStats } from '@/types'
 
 const FEATURED_COUNT = 3
 
@@ -21,6 +23,12 @@ async function fetchFeaturedCourses() {
     ...c,
     formateur_name: (c as unknown as { profiles?: { full_name?: string } }).profiles?.full_name ?? null,
   }))
+}
+
+async function fetchPlatformStats(): Promise<PlatformStats> {
+  const { data, error } = await supabase.rpc('get_platform_stats')
+  if (error) throw error
+  return data as unknown as PlatformStats
 }
 
 const FEATURES = [
@@ -46,16 +54,22 @@ const FEATURES = [
   },
 ]
 
-const STATS = [
-  { value: '0', label: 'Formations disponibles' },
-  { value: '0', label: 'Apprenants inscrits' },
-  { value: '0', label: 'Certificats délivrés' },
+const STAT_TILES = [
+  { key: 'courses' as const, icon: BookOpen, label: 'Formation disponible' },
+  { key: 'learners' as const, icon: Users, label: 'Apprenants inscrits' },
+  { key: 'enrollments' as const, icon: GraduationCap, label: 'Inscrits actifs' },
+  { key: 'certificates' as const, icon: Award, label: 'Certificats délivrés' },
 ]
 
 export function HomePage() {
   const { data: featuredCourses, isLoading } = useQuery({
     queryKey: ['courses', 'featured'],
     queryFn: fetchFeaturedCourses,
+  })
+
+  const { data: stats } = useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: fetchPlatformStats,
   })
 
   return (
@@ -139,14 +153,23 @@ export function HomePage() {
       </section>
 
       {/* Chiffres */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-3">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="font-display text-4xl font-bold text-primary">{stat.value}</div>
-              <div className="mt-2 text-sm text-gray">{stat.label}</div>
-            </div>
-          ))}
+      <section className="bg-primary py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {STAT_TILES.map((tile) => {
+              const value = stats?.[tile.key] ?? 0
+              const label = tile.key === 'courses' && value !== 1 ? 'Formations disponibles' : tile.label
+              return (
+                <div key={tile.key} className="rounded-xl bg-white/10 p-6 text-center text-white">
+                  <tile.icon className="mx-auto h-7 w-7 text-white/80" aria-hidden="true" />
+                  <div className="mt-3 font-display text-4xl font-bold">
+                    <CountUp end={value} duration={2} enableScrollSpy scrollSpyOnce />
+                  </div>
+                  <div className="mt-2 text-sm text-white/80">{label}</div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
     </div>

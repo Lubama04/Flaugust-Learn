@@ -72,7 +72,7 @@ export function CertificateDisplay({ certificate: c }: CertificateDisplayProps) 
           <div className="text-center">
             <div className="mb-1 h-px w-32 bg-gray-800 sm:w-44" />
             <p className="font-semibold text-dark">LUBAMA Jean Chrysostome ZACEI</p>
-            <p className="text-gray-400">Directeur Général — Flaugust Business</p>
+            <p className="text-gray-400">Directeur Général, Flaugust Business</p>
           </div>
           {c.verify_token && (
             <div className="hidden text-right sm:block">

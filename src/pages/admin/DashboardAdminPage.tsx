@@ -111,7 +111,7 @@ export function DashboardAdminPage() {
                 <tbody>
                   {(users ?? []).map((u) => (
                     <tr key={u.id} className="border-b border-gray-50 last:border-0">
-                      <td className="px-6 py-3">{u.full_name || '—'}</td>
+                      <td className="px-6 py-3">{u.full_name || '-'}</td>
                       <td className="px-6 py-3 text-gray">{u.email}</td>
                       <td className="px-6 py-3 text-gray">{formatDate(u.created_at)}</td>
                       <td className="px-6 py-3">

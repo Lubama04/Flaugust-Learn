@@ -34,9 +34,12 @@ async function fetchMyEnrollmentsMap(userId: string) {
   return new Map(data.map((e) => [e.course_id, e.status as EnrollmentStatus]))
 }
 
+const LANGUAGE_LABELS: Record<string, string> = { fr: 'Français', en: 'Anglais' }
+
 export function CataloguePage() {
   const [search, setSearch] = useState('')
   const [level, setLevel] = useState<string>('')
+  const [language, setLanguage] = useState<string>('')
   const [priceFilter, setPriceFilter] = useState<'' | 'gratuit' | 'payant'>('')
   const [page, setPage] = useState(1)
 
@@ -53,6 +56,11 @@ export function CataloguePage() {
     enabled: !!userId,
   })
 
+  const availableLanguages = useMemo(
+    () => Array.from(new Set((courses ?? []).map((c) => c.language))).sort(),
+    [courses]
+  )
+
   const filtered = useMemo(() => {
     if (!courses) return []
     return courses.filter((course) => {
@@ -60,11 +68,12 @@ export function CataloguePage() {
         course.title.toLowerCase().includes(search.toLowerCase()) ||
         course.description.toLowerCase().includes(search.toLowerCase())
       const matchesLevel = !level || course.level === level
+      const matchesLanguage = !language || course.language === language
       const matchesPrice =
         !priceFilter || (priceFilter === 'gratuit' ? course.is_free : !course.is_free)
-      return matchesSearch && matchesLevel && matchesPrice
+      return matchesSearch && matchesLevel && matchesLanguage && matchesPrice
     })
-  }, [courses, search, level, priceFilter])
+  }, [courses, search, level, language, priceFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -78,6 +87,11 @@ export function CataloguePage() {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="font-display text-3xl font-bold text-dark">Catalogue des formations</h1>
       <p className="mt-2 text-gray">Découvrez nos formations conçues par des experts africains.</p>
+      {!isLoading && (
+        <p className="mt-1 text-sm font-medium text-primary">
+          {filtered.length} formation{filtered.length !== 1 ? 's' : ''} disponible{filtered.length !== 1 ? 's' : ''}
+        </p>
+      )}
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
@@ -101,6 +115,20 @@ export function CataloguePage() {
             </option>
           ))}
         </select>
+        {availableLanguages.length > 1 && (
+          <select
+            value={language}
+            onChange={(e) => resetToPageOne(setLanguage)(e.target.value)}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark"
+          >
+            <option value="">Toutes les langues</option>
+            {availableLanguages.map((lang) => (
+              <option key={lang} value={lang}>
+                {LANGUAGE_LABELS[lang] ?? lang}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           value={priceFilter}
           onChange={(e) => resetToPageOne(setPriceFilter)(e.target.value as '' | 'gratuit' | 'payant')}
@@ -121,7 +149,7 @@ export function CataloguePage() {
             <p className="text-gray">
               {courses && courses.length > 0
                 ? 'Aucune formation ne correspond à votre recherche.'
-                : 'Premières formations bientôt disponibles. Revenez bientôt !'}
+                : "Les premières formations arrivent très bientôt ! Revenez vite."}
             </p>
           </div>
         ) : (

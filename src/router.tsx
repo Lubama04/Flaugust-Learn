@@ -21,7 +21,7 @@ import { NotificationsPage } from '@/pages/public/NotificationsPage'
 import { DashboardPage } from '@/pages/apprenant/DashboardPage'
 import { MesFormationsPage } from '@/pages/apprenant/MesFormationsPage'
 import { MesCertificatsPage } from '@/pages/apprenant/MesCertificatsPage'
-import { MesDocumentsPage } from '@/pages/apprenant/MesDocumentsPage'
+import { MonDossierPage } from '@/pages/apprenant/MonDossierPage'
 import { ProfilPage } from '@/pages/apprenant/ProfilPage'
 import { CourseReaderPage } from '@/pages/apprenant/CourseReaderPage'
 import { ExamenFinalPage } from '@/pages/apprenant/ExamenFinalPage'
@@ -31,6 +31,7 @@ import { InscriptionsPage } from '@/pages/formateur/InscriptionsPage'
 import { CourseCreatePage } from '@/pages/formateur/CourseCreatePage'
 import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
 import { QuizGeneratorPage } from '@/pages/formateur/QuizGeneratorPage'
+import { AssistantIAPage } from '@/pages/formateur/AssistantIAPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
 import { UsersPage } from '@/pages/admin/UsersPage'
@@ -104,13 +105,13 @@ const profilRoute = createRoute({
     </ProtectedRoute>
   ),
 })
-// Mes documents (export d'évaluations) : accessible à tous les rôles authentifiés.
-const documentsRoute = createRoute({
+// Mon dossier de formation (fiches, notes, exercices) : accessible à tous les rôles authentifiés.
+const dossierRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
-  path: '/documents',
+  path: '/dossier',
   component: () => (
     <ProtectedRoute>
-      <MesDocumentsPage />
+      <MonDossierPage />
     </ProtectedRoute>
   ),
 })
@@ -179,6 +180,11 @@ const quizGeneratorRoute = createRoute({
   path: '/formateur/quiz-generator',
   component: QuizGeneratorPage,
 })
+const assistantIARoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/assistant-ia',
+  component: AssistantIAPage,
+})
 
 // ── Groupe ADMIN ───────────────────────────────────────────────
 const adminLayoutRoute = createRoute({
@@ -229,7 +235,7 @@ const routeTree = rootRoute.addChildren([
     certificateViewerRoute,
     unauthorizedRoute,
     profilRoute,
-    documentsRoute,
+    dossierRoute,
     courseChatRoute,
     notificationsRoute,
   ]),
@@ -240,6 +246,7 @@ const routeTree = rootRoute.addChildren([
     courseCreateRoute,
     courseEditRoute,
     quizGeneratorRoute,
+    assistantIARoute,
   ]),
   adminLayoutRoute.addChildren([adminDashboardRoute, adminUsersRoute, adminPaymentsRoute]),
   courseReaderRoute,

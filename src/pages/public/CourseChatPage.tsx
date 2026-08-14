@@ -56,7 +56,7 @@ function CourseChatContent() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-dark">Discussion — {course.title}</p>
+          <p className="truncate text-sm font-semibold text-dark">Discussion : {course.title}</p>
           <p className="text-xs text-gray-400">Posez vos questions, l'assistant IA et votre formateur répondent</p>
         </div>
       </div>

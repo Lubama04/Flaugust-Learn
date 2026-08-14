@@ -237,7 +237,7 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
       <Dialog open={!!exerciseDialog} onOpenChange={(open) => !open && setExerciseDialog(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Exercice de validation — {exerciseDialog?.session.title}</DialogTitle>
+            <DialogTitle>Exercice de validation : {exerciseDialog?.session.title}</DialogTitle>
           </DialogHeader>
           {exerciseDialog && (
             <ExerciseBuilder

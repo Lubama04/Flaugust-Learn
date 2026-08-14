@@ -61,7 +61,7 @@ export function InscriptionsPage() {
     },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['pending-enrollments'] })
-      toast.success(variables.status === 'actif' ? 'Inscription validée — email envoyé à l\'apprenant' : 'Inscription mise à jour')
+      toast.success(variables.status === 'actif' ? 'Inscription validée, email envoyé à l\'apprenant' : 'Inscription mise à jour')
     },
     onError: () => toast.error('Erreur lors de la mise à jour'),
   })
@@ -95,8 +95,8 @@ export function InscriptionsPage() {
               <tbody>
                 {enrollments.map((e) => (
                   <tr key={e.id} className="border-b border-gray-50 last:border-0">
-                    <td className="px-6 py-3">{e.profiles?.full_name ?? '—'}</td>
-                    <td className="px-6 py-3">{e.courses?.title ?? '—'}</td>
+                    <td className="px-6 py-3">{e.profiles?.full_name ?? '-'}</td>
+                    <td className="px-6 py-3">{e.courses?.title ?? '-'}</td>
                     <td className="px-6 py-3 text-gray">{formatDate(e.created_at)}</td>
                     <td className="px-6 py-3">
                       <div className="flex gap-2">

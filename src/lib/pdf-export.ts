@@ -24,11 +24,11 @@ export function exportAssessmentsToPdf(data: AssessmentExportData): void {
   doc.setTextColor('#FFFFFF')
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text("RAPPORT D'ÉVALUATIONS — FLAUGUSTLEARN", margin, 20)
+  doc.text("RAPPORT D'ÉVALUATIONS : FLAUGUSTLEARN", margin, 20)
   y = 40
 
-  addText(`Apprenant : ${data.student?.full_name ?? '—'}`, 12, true)
-  addText(`Formation : ${data.course?.title ?? '—'}`, 11)
+  addText(`Apprenant : ${data.student?.full_name ?? 'Non renseigné'}`, 12, true)
+  addText(`Formation : ${data.course?.title ?? 'Non renseigné'}`, 11)
   addText(`Date : ${new Date(data.generated_at).toLocaleDateString('fr-FR')}`, 11)
   addText(`Score global : ${data.passed_exercises}/${data.total_exercises} exercices validés`, 11)
   y += 5
@@ -39,7 +39,7 @@ export function exportAssessmentsToPdf(data: AssessmentExportData): void {
     doc.rect(margin - 2, y - 5, 174, 10, 'F')
 
     addText(
-      assessment.is_final_exam ? 'EXAMEN FINAL' : `${assessment.module_title} — ${assessment.session_title}`,
+      assessment.is_final_exam ? 'EXAMEN FINAL' : `${assessment.module_title} : ${assessment.session_title}`,
       12,
       true
     )

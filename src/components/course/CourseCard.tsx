@@ -54,7 +54,7 @@ export function CourseCard({ course, enrollmentStatus }: CourseCardProps) {
           <div className="mt-3 flex items-center gap-4 text-xs text-gray">
             <span className="flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-              {course.rating_avg > 0 ? course.rating_avg.toFixed(1) : '—'}
+              {course.rating_avg > 0 ? course.rating_avg.toFixed(1) : '-'}
             </span>
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" /> {course.enrolled_count}

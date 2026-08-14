@@ -1,5 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import DOMPurify from 'dompurify'
 import { Clock, Layers, FileText, Lock, PlayCircle, Award, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -126,7 +127,14 @@ export function CourseDetailPage() {
             </span>
             {formateurName && <span>Par {formateurName}</span>}
           </div>
-          <p className="mt-4 text-gray">{course.description || course.short_description}</p>
+          {course.description ? (
+            <div
+              className="prose prose-sm mt-4 max-w-none text-gray"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(course.description) }}
+            />
+          ) : (
+            <p className="mt-4 text-gray">{course.short_description}</p>
+          )}
 
           <h2 className="mt-8 text-xl font-semibold text-dark">Plan de la formation</h2>
           <div className="mt-4 space-y-3">

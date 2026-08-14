@@ -183,8 +183,8 @@ export function PaymentsPage() {
                     const status = PAYMENT_STATUS_LABELS[p.status] ?? PAYMENT_STATUS_LABELS.en_attente!
                     return (
                       <tr key={p.id} className="border-b border-gray-50 last:border-0">
-                        <td className="px-6 py-3">{p.profiles?.full_name ?? '—'}</td>
-                        <td className="px-6 py-3">{p.courses?.title ?? '—'}</td>
+                        <td className="px-6 py-3">{p.profiles?.full_name ?? '-'}</td>
+                        <td className="px-6 py-3">{p.courses?.title ?? '-'}</td>
                         <td className="px-6 py-3">{formatPrice(p.amount_fcfa)}</td>
                         <td className="px-6 py-3 text-gray">{p.provider}</td>
                         <td className="px-6 py-3">

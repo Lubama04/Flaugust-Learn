@@ -57,11 +57,47 @@ export type FormationSchedule = Tables<'formation_schedules'>
 export type PushSubscriptionRow = Tables<'push_subscriptions'>
 export type AdminLog = Tables<'admin_logs'>
 export type ResourceAccessLog = Tables<'resource_access_logs'>
+export type LearnerWorksheet = Tables<'learner_worksheets'>
 
 export type UserRole = Profile['role']
 export type EnrollmentStatus = Enrollment['status']
 export type CourseStatus = Course['status']
 export type IndexingStatus = 'non_indexe' | 'en_cours' | 'indexe' | 'echec'
+
+/** Un champ d'une fiche interactive : soit un champ texte, soit un tableau configurable. */
+export interface WorksheetField {
+  id: string
+  label: string
+  type: 'text' | 'textarea' | 'table'
+  placeholder?: string
+  table_config?: {
+    cols: string[]
+    /** Nombre de lignes vides éditables, ou lignes pré-remplies (gabarit avec cellules vides à compléter). */
+    rows: number | string[][]
+  }
+}
+
+/** Structure de sessions.worksheet_schema : null = pas de fiche pour cette session. */
+export interface WorksheetSchema {
+  title: string
+  fields: WorksheetField[]
+}
+
+/** Valeur d'un champ dans learner_worksheets.worksheet_data : une chaîne pour text/textarea, une grille pour table. */
+export type WorksheetFieldValue = string | string[][]
+
+/** Structure de learner_worksheets.worksheet_data. */
+export interface WorksheetData {
+  fields: Array<{ id: string; value: WorksheetFieldValue }>
+}
+
+/** Stats agrégées retournées par la RPC publique get_platform_stats. */
+export interface PlatformStats {
+  courses: number
+  learners: number
+  enrollments: number
+  certificates: number
+}
 
 /** Une source citée par l'IA dans une réponse du chat de formation. */
 export interface AiChatSource {

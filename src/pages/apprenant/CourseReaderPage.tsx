@@ -16,9 +16,10 @@ import { VideoCard } from '@/components/reader/VideoCard'
 import { AudioCard } from '@/components/reader/AudioCard'
 import { PdfCard } from '@/components/reader/PdfCard'
 import { ExerciseModal } from '@/components/reader/ExerciseModal'
+import { WorksheetPanel } from '@/components/reader/WorksheetPanel'
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel'
 import { Button } from '@/components/ui/button'
-import type { CourseSession, Exercise } from '@/types'
+import type { CourseSession, Exercise, WorksheetSchema } from '@/types'
 
 function stripHtml(html: string): string {
   const div = document.createElement('div')
@@ -211,7 +212,7 @@ function CourseReaderContent() {
                     {note.video_timestamp_seconds !== null && (
                       <span className="text-xs font-medium text-primary">
                         {Math.floor(note.video_timestamp_seconds / 60)}:
-                        {String(note.video_timestamp_seconds % 60).padStart(2, '0')} —{' '}
+                        {String(note.video_timestamp_seconds % 60).padStart(2, '0')} :{' '}
                       </span>
                     )}
                     {note.content}
@@ -258,58 +259,83 @@ function CourseReaderContent() {
         ) : access && !access.allowed ? (
           <EcranVerrouille access={access} onGoToPreviousSession={(id) => void navigate({ search: { session: id } })} />
         ) : (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-dark">{activeSession.title}</h2>
-              {activeSession.description && <p className="mt-1 text-sm text-gray">{activeSession.description}</p>}
-            </div>
+          (() => {
+            const worksheetSchema = activeSession.worksheet_schema as unknown as WorksheetSchema | null
 
-            {activeSession.type === 'texte' && (
-              <TexteCard
-                sessionId={activeSession.id}
-                enrollmentId={enrollment.id}
-                contentHtml={activeSession.content_text ?? ''}
-                isCompleted={isSessionCompleted}
-                onCompleted={handleContentCompleted}
-              />
-            )}
-            {activeSession.type === 'video' && (
-              <VideoCard
-                sessionId={activeSession.id}
-                enrollmentId={enrollment.id}
-                contentUrl={activeSession.content_url ?? ''}
-                isCompleted={isSessionCompleted}
-                onCompleted={handleContentCompleted}
-              />
-            )}
-            {activeSession.type === 'audio' && (
-              <AudioCard
-                sessionId={activeSession.id}
-                enrollmentId={enrollment.id}
-                contentUrl={activeSession.content_url ?? ''}
-                isCompleted={isSessionCompleted}
-              />
-            )}
-            {activeSession.type === 'pdf' && (
-              <PdfCard
-                sessionId={activeSession.id}
-                enrollmentId={enrollment.id}
-                contentUrl={activeSession.content_url ?? ''}
-                isCompleted={isSessionCompleted}
-                onCompleted={handleContentCompleted}
-              />
-            )}
-            {(activeSession.type === 'slides' || activeSession.type === 'live') && activeSession.content_url && (
-              <a
-                href={activeSession.content_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm text-primary hover:bg-primary/10"
-              >
-                Ouvrir le contenu →
-              </a>
-            )}
-          </div>
+            const sessionContent = (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-dark">{activeSession.title}</h2>
+                  {activeSession.description && <p className="mt-1 text-sm text-gray">{activeSession.description}</p>}
+                </div>
+
+                {activeSession.type === 'texte' && (
+                  <TexteCard
+                    sessionId={activeSession.id}
+                    enrollmentId={enrollment.id}
+                    contentHtml={activeSession.content_text ?? ''}
+                    isCompleted={isSessionCompleted}
+                    onCompleted={handleContentCompleted}
+                  />
+                )}
+                {activeSession.type === 'video' && (
+                  <VideoCard
+                    sessionId={activeSession.id}
+                    enrollmentId={enrollment.id}
+                    contentUrl={activeSession.content_url ?? ''}
+                    isCompleted={isSessionCompleted}
+                    onCompleted={handleContentCompleted}
+                  />
+                )}
+                {activeSession.type === 'audio' && (
+                  <AudioCard
+                    sessionId={activeSession.id}
+                    enrollmentId={enrollment.id}
+                    contentUrl={activeSession.content_url ?? ''}
+                    isCompleted={isSessionCompleted}
+                  />
+                )}
+                {activeSession.type === 'pdf' && (
+                  <PdfCard
+                    sessionId={activeSession.id}
+                    enrollmentId={enrollment.id}
+                    contentUrl={activeSession.content_url ?? ''}
+                    isCompleted={isSessionCompleted}
+                    onCompleted={handleContentCompleted}
+                  />
+                )}
+                {(activeSession.type === 'slides' || activeSession.type === 'live') && activeSession.content_url && (
+                  <a
+                    href={activeSession.content_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm text-primary hover:bg-primary/10"
+                  >
+                    Ouvrir le contenu, cliquez ici
+                  </a>
+                )}
+              </div>
+            )
+
+            if (!worksheetSchema) return sessionContent
+
+            // Session avec fiche interactive : deux panneaux côte à côte sur desktop (contenu à
+            // gauche, fiche à droite, la fiche restant visible en scrollant grâce à sticky), et
+            // empilés verticalement sur mobile faute de place pour deux colonnes.
+            return (
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>{sessionContent}</div>
+                <div className="lg:sticky lg:top-4 lg:max-h-screen lg:self-start lg:overflow-y-auto">
+                  <WorksheetPanel
+                    sessionId={activeSession.id}
+                    enrollmentId={enrollment.id}
+                    sessionTitle={activeSession.title}
+                    schema={worksheetSchema}
+                  />
+                </div>
+              </div>
+            )
+          })()
         )}
       </CourseReader>
 

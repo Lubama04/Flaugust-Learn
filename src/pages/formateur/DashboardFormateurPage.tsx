@@ -87,9 +87,9 @@ export function DashboardFormateurPage() {
             <ul className="space-y-1.5">
               {pendingEnrollments.map((e) => (
                 <li key={e.id} className="text-sm text-gray">
-                  <span className="font-medium text-dark">{e.profiles?.full_name ?? '—'}</span>
-                  {' — '}
-                  {e.courses?.title ?? '—'}
+                  <span className="font-medium text-dark">{e.profiles?.full_name ?? '-'}</span>
+                  {' : '}
+                  {e.courses?.title ?? '-'}
                 </li>
               ))}
             </ul>

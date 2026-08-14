@@ -19,20 +19,20 @@ export async function exportAssessmentsToDocx(data: AssessmentExportData): Promi
 
   children.push(
     new Paragraph({
-      text: "RAPPORT D'ÉVALUATIONS — FLAUGUSTLEARN",
+      text: "RAPPORT D'ÉVALUATIONS : FLAUGUSTLEARN",
       heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
     }),
     new Paragraph({
       children: [
         new TextRun({ text: `Apprenant : `, bold: true }),
-        new TextRun({ text: data.student?.full_name ?? '—' }),
+        new TextRun({ text: data.student?.full_name ?? 'Non renseigné' }),
       ],
     }),
     new Paragraph({
       children: [
         new TextRun({ text: `Formation : `, bold: true }),
-        new TextRun({ text: data.course?.title ?? '—' }),
+        new TextRun({ text: data.course?.title ?? 'Non renseigné' }),
       ],
     }),
     new Paragraph({
@@ -55,7 +55,7 @@ export async function exportAssessmentsToDocx(data: AssessmentExportData): Promi
       new Paragraph({
         text: assessment.is_final_exam
           ? '📋 EXAMEN FINAL'
-          : `📝 ${assessment.module_title} — ${assessment.session_title}`,
+          : `📝 ${assessment.module_title} : ${assessment.session_title}`,
         heading: HeadingLevel.HEADING_2,
         shading: { type: ShadingType.CLEAR, fill: assessment.passed ? 'E8F5E9' : 'FFEBEE' },
       }),

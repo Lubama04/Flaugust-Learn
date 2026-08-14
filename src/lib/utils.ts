@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]): string {
 
 /** Formate une date ISO en date lisible française (ex: "10 août 2026"). */
 export function formatDate(dateIso: string | null | undefined): string {
-  if (!dateIso) return '—'
+  if (!dateIso) return '-'
   return new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
     month: 'long',

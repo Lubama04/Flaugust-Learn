@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     </div>
   </div>
   <div style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #eee">
-    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn — Flaugust Business | Réflexion — Action — Impact</p>
+    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn, Flaugust Business | Réflexion, Action, Impact</p>
   </div>
 </div>
 </body></html>`
@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: 'FlaugustLearn <onboarding@resend.dev>',
         to: [profile.email],
-        subject: 'Bienvenue sur FlaugustLearn — Votre compte est créé',
+        subject: 'Bienvenue sur FlaugustLearn : votre compte est créé',
         html: emailHtml,
       }),
     })

@@ -79,7 +79,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
   await supabase.from('notifications').insert({
     user_id: enrollment.course.formateur_id,
     type: 'nouvelle_inscription',
-    title: `📩 Nouvelle inscription — ${enrollment.course.title}`,
+    title: `📩 Nouvelle inscription : ${enrollment.course.title}`,
     message,
     metadata: { enrollment_id: enrollment.id, course_id: enrollment.course.id, apprenant_id: enrollment.user_id },
   })
@@ -102,7 +102,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
     <p style="color:#E88930;margin:8px 0 0;font-size:13px;letter-spacing:2px;text-transform:uppercase">Établissement Flaugust Business</p>
   </div>
   <div style="padding:40px">
-    <h2 style="color:#1A1A1A;font-size:22px;margin:0 0 16px">📩 Nouvelle inscription — ${courseTitle}</h2>
+    <h2 style="color:#1A1A1A;font-size:22px;margin:0 0 16px">📩 Nouvelle inscription : ${courseTitle}</h2>
     <p style="color:#444;line-height:1.8;margin:0 0 8px"><strong>${studentName}</strong> souhaite rejoindre votre formation.</p>
     <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:16px 0">
       <p style="color:#444;font-size:14px;margin:4px 0"><strong>Email :</strong> ${studentEmail}</p>
@@ -117,7 +117,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
     </div>
   </div>
   <div style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #eee">
-    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn — Flaugust Business | Réflexion — Action — Impact</p>
+    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn, Flaugust Business | Réflexion, Action, Impact</p>
   </div>
 </div>
 </body></html>`
@@ -129,7 +129,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
         body: JSON.stringify({
           from: 'FlaugustLearn <onboarding@resend.dev>',
           to: [formateur.email],
-          subject: `📩 Nouvelle inscription — ${enrollment.course.title}`,
+          subject: `📩 Nouvelle inscription : ${enrollment.course.title}`,
           html: emailHtml,
         }),
       })

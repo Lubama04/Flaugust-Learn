@@ -221,7 +221,7 @@ Deno.serve(async (req: Request) => {
       .join('\n')
 
     const sourcesText = sources.length > 0
-      ? sources.map((s, i) => `[Source ${i + 1} — ${s.title}]\n${s.excerpt}`).join('\n\n')
+      ? sources.map((s, i) => `[Source ${i + 1} : ${s.title}]\n${s.excerpt}`).join('\n\n')
       : "Aucune ressource indexée pertinente pour cette question."
 
     const systemBase = `Tu es l'assistant pédagogique du chat de la formation "${course.title}" sur

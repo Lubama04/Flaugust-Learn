@@ -56,7 +56,7 @@ export function TexteTrousBuilder({ questions, onChange }: TexteTrousBuilderProp
           <CardContent className="space-y-3 pt-6">
             <div className="flex items-start gap-2">
               <Textarea
-                placeholder={`Phrase ${i + 1} — utilisez ___ pour chaque trou à compléter`}
+                placeholder={`Phrase ${i + 1} : utilisez ___ pour chaque trou à compléter`}
                 value={q.text}
                 onChange={(e) => updateText(q.id, e.target.value)}
                 rows={2}

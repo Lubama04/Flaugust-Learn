@@ -53,7 +53,7 @@ function AssociationQuestionRow({
               onChange={(e) => onChange(question.id, pair.left, e.target.value)}
               className="h-9 flex-1 rounded-lg border border-gray-300 bg-white px-2 text-sm text-dark"
             >
-              <option value="">— Choisir —</option>
+              <option value="">Choisir...</option>
               {shuffledRights.map((right) => (
                 <option key={right} value={right}>
                   {right}

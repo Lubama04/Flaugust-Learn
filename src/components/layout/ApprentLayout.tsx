@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { LayoutDashboard, BookOpen, Award, User } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Award, FolderOpen, User } from 'lucide-react'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { DashboardSidebar, type SidebarLink } from '@/components/layout/DashboardSidebar'
 import { Navbar } from '@/components/layout/Navbar'
@@ -8,6 +8,7 @@ const LINKS: SidebarLink[] = [
   { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { to: '/mes-formations', label: 'Mes formations', icon: BookOpen },
   { to: '/mes-certificats', label: 'Mes certificats', icon: Award },
+  { to: '/dossier', label: 'Mon dossier', icon: FolderOpen },
   { to: '/profil', label: 'Mon profil', icon: User },
 ]
 

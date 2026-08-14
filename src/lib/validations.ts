@@ -26,7 +26,8 @@ export type RegisterInput = z.infer<typeof registerSchema>
 export const courseFormSchema = z.object({
   title: z.string().trim().min(5, 'Titre trop court (5 caractères min.)').max(200),
   shortDescription: z.string().trim().min(10, 'Description courte trop courte').max(300),
-  description: z.string().trim().min(20, 'Description trop courte (20 caractères min.)'),
+  // La description complète est gérée hors react-hook-form (RichTextEditor produit du HTML,
+  // validé manuellement dans CourseForm.tsx) : même pattern que content_text dans SessionEditor.
   level: z.enum(['debutant', 'intermediaire', 'avance']),
   language: z.string().trim().min(2).max(10),
   durationHours: z.number().min(0).max(1000),

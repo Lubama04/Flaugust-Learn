@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { LayoutDashboard, ClipboardCheck } from 'lucide-react'
+import { LayoutDashboard, ClipboardCheck, Bot } from 'lucide-react'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { DashboardSidebar, type SidebarLink } from '@/components/layout/DashboardSidebar'
 import { Navbar } from '@/components/layout/Navbar'
@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 const LINKS: SidebarLink[] = [
   { to: '/formateur', label: 'Mes formations', icon: LayoutDashboard },
   { to: '/formateur/inscriptions', label: 'Inscriptions', icon: ClipboardCheck },
+  { to: '/formateur/assistant-ia', label: 'Assistant IA', icon: Bot },
 ]
 
 export function FormateurLayout() {

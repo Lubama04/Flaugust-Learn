@@ -76,7 +76,7 @@ export function ResourceUpload({ open, onOpenChange, onUploadFile, onAddLink, is
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
               />
-              <p className="mt-1 text-xs text-gray-400">Max 20 Mo — PDF, image, document. Indexable par l'IA du chat.</p>
+              <p className="mt-1 text-xs text-gray-400">Max 20 Mo, PDF, image, document. Indexable par l'IA du chat.</p>
               <DialogFooter className="mt-4">
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                   Annuler
