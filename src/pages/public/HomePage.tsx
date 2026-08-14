@@ -1,12 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import CountUp from 'react-countup'
 import { Award, Smartphone, ShieldCheck, Volume2, BookOpen, Users, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CourseCard } from '@/components/course/CourseCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { AnimatedCounter } from '@/components/shared/AnimatedCounter'
 import type { PlatformStats } from '@/types'
 
 const FEATURED_COUNT = 3
@@ -163,7 +163,7 @@ export function HomePage() {
                 <div key={tile.key} className="rounded-xl bg-white/10 p-6 text-center text-white">
                   <tile.icon className="mx-auto h-7 w-7 text-white/80" aria-hidden="true" />
                   <div className="mt-3 font-display text-4xl font-bold">
-                    <CountUp end={value} duration={2} enableScrollSpy scrollSpyOnce />
+                    <AnimatedCounter end={value} />
                   </div>
                   <div className="mt-2 text-sm text-white/80">{label}</div>
                 </div>
