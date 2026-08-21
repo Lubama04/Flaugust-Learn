@@ -1039,6 +1039,72 @@ export type Database = {
           },
         ]
       }
+      pending_ai_sessions: {
+        Row: {
+          course_id: string
+          created_at: string
+          error_message: string | null
+          file_base64: string | null
+          file_content: string | null
+          file_mime_type: string | null
+          file_name: string
+          formateur_id: string
+          id: string
+          instructions: string | null
+          options: Json
+          processed_at: string | null
+          result: Json | null
+          status: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          error_message?: string | null
+          file_base64?: string | null
+          file_content?: string | null
+          file_mime_type?: string | null
+          file_name: string
+          formateur_id: string
+          id?: string
+          instructions?: string | null
+          options?: Json
+          processed_at?: string | null
+          result?: Json | null
+          status?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          error_message?: string | null
+          file_base64?: string | null
+          file_content?: string | null
+          file_mime_type?: string | null
+          file_name?: string
+          formateur_id?: string
+          id?: string
+          instructions?: string | null
+          options?: Json
+          processed_at?: string | null
+          result?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_ai_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_ai_sessions_formateur_id_fkey"
+            columns: ["formateur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
