@@ -87,8 +87,12 @@ export class GeminiQuotaExceededError extends Error {
 // les erreurs Gemini alternent entre 503 "high demand" (transitoire, un retry court a du sens) et
 // 429 avec quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20 (quota journalier
 // gratuit réellement épuisé, un retry de quelques secondes n'a aucune chance d'aboutir).
+// Délai réduit (2s au lieu de 4s) suite à un second constat en production : une Edge Function
+// Supabase est tuée après 150s d'inactivité de réponse (IDLE_TIMEOUT). Avec 3 retries à 4s/8s/12s
+// (24s de pur backoff) en plus du temps de génération Gemini lui-même sur un document long, le
+// budget de 150s pouvait être dépassé. 2s/4s/6s (12s de backoff) laisse plus de marge.
 const GEMINI_MAX_RETRIES = 3
-const GEMINI_RETRY_DELAY_MS = 4000
+const GEMINI_RETRY_DELAY_MS = 2000
 
 async function callGemini(parts: Array<Record<string, unknown>>, systemPrompt: string, apiKey: string): Promise<string> {
   let lastError = ''

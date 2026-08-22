@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { GeminiQuotaExceededError, runCourseOrganizer } from './organizer-core.ts'
 
-// Appelée par un job pg_cron (net.http_post) chaque jour à 00:05 UTC, donc sans JWT utilisateur,
+// Appelée par un job pg_cron (net.http_post) toutes les 10 minutes, donc sans JWT utilisateur,
 // déployée avec verify_jwt=false, exactement comme send-notifications-job/send-notifications déjà
 // en place sur ce projet. Un appel répété ou externe de cet endpoint public reste sans effet
 // néfaste au-delà d'un déclenchement inutile : il ne fait que traiter des lignes 'pending' déjà
@@ -12,10 +12,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Protection contre un run qui traiterait un lot trop long (chaque appel Gemini peut prendre
-// plusieurs dizaines de secondes avec les retries) : borne haute raisonnable pour une exécution
-// cron quotidienne.
-const MAX_SESSIONS_PER_RUN = 15
+// Constaté en production : deux traitements lourds (texte long + retries Gemini) dans une seule
+// invocation ont fait planter la fonction avec WORKER_RESOURCE_LIMIT. Un seul item par run reste
+// dans les limites de calcul d'une Edge Function ; le cron toutes les 10 minutes (voir migration)
+// compense la baisse de débit en traitant la file en continu plutôt qu'un gros lot une fois par jour.
+const MAX_SESSIONS_PER_RUN = 1
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -44,6 +45,18 @@ Deno.serve(async (req: Request) => {
 
   const adminClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
+  // Auto-guérison : une ligne dont le traitement a démarré il y a plus de 5 minutes et qui est
+  // toujours 'processing' signifie que l'invocation précédente a été tuée en plein vol (constaté
+  // en production : IDLE_TIMEOUT à 150s côté plateforme Supabase). Sans ce filet, une telle ligne
+  // resterait bloquée indéfiniment, invisible pour la requête ci-dessous qui ne sélectionne que
+  // 'pending'. On se base sur processing_started_at (horodatage du dernier passage en
+  // 'processing'), pas created_at (date de mise en file, sans rapport avec un blocage récent).
+  await adminClient
+    .from('pending_ai_sessions')
+    .update({ status: 'pending' })
+    .eq('status', 'processing')
+    .lt('processing_started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+
   const { data: pending, error: fetchError } = await adminClient
     .from('pending_ai_sessions')
     .select('id, formateur_id, course_id, file_name, file_content, file_base64, file_mime_type, instructions, options')
@@ -64,7 +77,10 @@ Deno.serve(async (req: Request) => {
   const doneByFormateur = new Map<string, string[]>()
 
   for (const row of pending as PendingRow[]) {
-    await adminClient.from('pending_ai_sessions').update({ status: 'processing' }).eq('id', row.id)
+    await adminClient
+      .from('pending_ai_sessions')
+      .update({ status: 'processing', processing_started_at: new Date().toISOString() })
+      .eq('id', row.id)
 
     try {
       const result = await runCourseOrganizer(adminClient, apiKey, {
