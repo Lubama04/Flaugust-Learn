@@ -44,3 +44,81 @@
     display: none !important;
   }
 }
+
+/* Typographie du contenu de lecture (cartes du lecteur, CardNavigator) : le HTML des sessions est
+   injecté via dangerouslySetInnerHTML, donc ciblé par des sélecteurs CSS plutôt que des classes
+   Tailwind posées élément par élément. */
+@layer components {
+  .reader-prose {
+    color: #374151;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .reader-prose p,
+  .reader-prose ul,
+  .reader-prose ol {
+    margin-bottom: 1.5em;
+  }
+  .reader-prose ul,
+  .reader-prose ol {
+    padding-left: 1.5em;
+  }
+  .reader-prose li {
+    margin-bottom: 0.5em;
+  }
+  .reader-prose h2 {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: 1.25em;
+    padding-bottom: 0.6em;
+  }
+  .reader-prose h2::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--color-primary);
+  }
+  .reader-prose h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-secondary);
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+  }
+  .reader-prose table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5em 0;
+    font-size: 0.95em;
+  }
+  .reader-prose table th {
+    background: var(--color-primary);
+    color: white;
+    padding: 12px;
+    text-align: left;
+    border: 1px solid var(--color-primary);
+  }
+  .reader-prose table td {
+    border: 1px solid #e5e7eb;
+    padding: 10px 12px;
+  }
+  .reader-prose table tr:nth-child(even) td {
+    background: #f9fafb;
+  }
+  @media (max-width: 639px) {
+    .reader-prose {
+      font-size: 15px;
+    }
+    .reader-prose h2 {
+      font-size: 20px;
+    }
+  }
+}

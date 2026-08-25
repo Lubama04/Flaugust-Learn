@@ -206,6 +206,7 @@ export function WorksheetPanel({ sessionId, enrollmentId, sessionTitle, schema }
                     value={typeof values[field.id] === 'string' ? (values[field.id] as string) : ''}
                     placeholder={field.placeholder}
                     onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    className="border-gray-300 focus-visible:border-primary focus-visible:ring-primary"
                   />
                 )}
 
@@ -215,6 +216,7 @@ export function WorksheetPanel({ sessionId, enrollmentId, sessionTitle, schema }
                     value={typeof values[field.id] === 'string' ? (values[field.id] as string) : ''}
                     placeholder={field.placeholder}
                     onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    className="min-h-[80px] border-gray-300 focus-visible:border-primary focus-visible:ring-primary"
                   />
                 )}
 
@@ -224,7 +226,10 @@ export function WorksheetPanel({ sessionId, enrollmentId, sessionTitle, schema }
                       <thead>
                         <tr>
                           {field.table_config.cols.map((col) => (
-                            <th key={col} className="bg-primary px-2 py-2 text-left text-xs font-semibold text-white">
+                            <th
+                              key={col}
+                              className="border border-primary bg-primary px-3 py-3 text-left text-xs font-semibold text-white"
+                            >
                               {col}
                             </th>
                           ))}
@@ -232,7 +237,7 @@ export function WorksheetPanel({ sessionId, enrollmentId, sessionTitle, schema }
                       </thead>
                       <tbody>
                         {(values[field.id] as string[][]).map((row, rowIdx) => (
-                          <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-[#F9F9F9]' : 'bg-white'}>
+                          <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-[#F9F9F9]'}>
                             {row.map((cell, colIdx) => {
                               // Une cellule non vide dans un gabarit pré-rempli (table_config.rows
                               // fourni sous forme de grille) est un libellé fixe, pas une valeur
@@ -242,14 +247,14 @@ export function WorksheetPanel({ sessionId, enrollmentId, sessionTitle, schema }
                                   ? field.table_config?.rows[rowIdx]?.[colIdx] !== ''
                                   : false
                               return (
-                                <td key={colIdx} className="border-t border-gray-100 p-1">
+                                <td key={colIdx} className="border border-gray-200 p-1">
                                   {isTemplateLabel ? (
-                                    <span className="block px-2 py-1.5 text-dark">{cell}</span>
+                                    <span className="block px-3 py-2 text-dark">{cell}</span>
                                   ) : (
                                     <input
                                       value={cell}
                                       onChange={(e) => handleTableCellChange(field.id, rowIdx, colIdx, e.target.value)}
-                                      className="w-full rounded border-0 bg-transparent px-2 py-1.5 text-dark focus:outline-none focus:ring-1 focus:ring-primary"
+                                      className="w-full rounded border-0 bg-transparent px-3 py-2 text-dark focus:outline-none focus:ring-2 focus:ring-primary"
                                     />
                                   )}
                                 </td>

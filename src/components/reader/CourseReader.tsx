@@ -1,54 +1,51 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 
 interface CourseReaderProps {
   title: string
-  progressLabel: string
-  sidebar: ReactNode
-  notes?: ReactNode
+  sessionTitle?: string
+  progressPct: number
+  onOpenPlan: () => void
+  audioButton?: ReactNode
   children: ReactNode
   headerAction?: ReactNode
 }
 
 /**
- * Layout 3 colonnes du lecteur : sidebar (navigation + progression) / contenu / notes.
- * Sur mobile, la sidebar devient un accordéon repliable au-dessus du contenu.
+ * Coquille du lecteur : en-tête avec bouton Plan (ouvre l'overlay) et barre de progression fine,
+ * contenu centré (max-width 720px) sur fond légèrement gris. Le plan de formation, la fiche
+ * interactive et le chat/assistant vivent désormais en overlays plutôt que dans des colonnes
+ * fixes, donc plus de mise en page 3 colonnes ici.
  */
-export function CourseReader({ title, progressLabel, sidebar, notes, children, headerAction }: CourseReaderProps) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-
+export function CourseReader({ title, sessionTitle, progressPct, onOpenPlan, audioButton, children, headerAction }: CourseReaderProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-lightGray/40">
-      <header className="flex h-14 items-center gap-3 border-b border-gray-100 bg-white px-4">
-        <button
-          type="button"
-          className="text-gray-400 md:hidden"
-          onClick={() => setMobileNavOpen((o) => !o)}
-          aria-label="Basculer la navigation"
-        >
-          {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-dark">{title}</p>
-          <p className="text-xs text-gray-400">{progressLabel}</p>
+    <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
+      <header className="sticky top-0 z-20 bg-white shadow-sm">
+        <div className="flex h-14 items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={onOpenPlan}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-primary hover:bg-primary/5"
+          >
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Plan</span>
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-dark">{sessionTitle ?? title}</p>
+            {sessionTitle && <p className="truncate text-xs text-gray-400">{title}</p>}
+          </div>
+          {audioButton}
+          {headerAction}
         </div>
-        {headerAction}
+        <div className="flex items-center gap-2 px-4 pb-2">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+            <div className="h-full rounded-full bg-secondary transition-all duration-300" style={{ width: `${progressPct}%` }} />
+          </div>
+          <span className="shrink-0 text-xs font-medium text-gray-400">{progressPct}%</span>
+        </div>
       </header>
 
-      {mobileNavOpen && (
-        <div className="border-b border-gray-100 bg-white p-4 md:hidden">{sidebar}</div>
-      )}
-
-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 px-4 py-6">
-        <aside className="hidden w-64 shrink-0 md:block">
-          <div className="sticky top-6">{sidebar}</div>
-        </aside>
-
-        <main className="min-w-0 flex-1">{children}</main>
-
-        {notes && <aside className="hidden w-72 shrink-0 lg:block">{notes}</aside>}
-      </div>
+      <main className="mx-auto w-full max-w-[720px] flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   )
 }
