@@ -103,7 +103,12 @@ async function callGemini(parts: Array<Record<string, unknown>>, systemPrompt: s
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 8192, responseMimeType: 'application/json' },
+        // 8192 s'est révélé insuffisant en production : Session 5 (contenu HTML riche + deux
+        // fiches détaillées + quiz) a produit une réponse tronquée en plein milieu d'une chaîne
+        // JSON ("Unterminated string"), provoquant un échec de parsing malgré une génération
+        // réussie côté Gemini. 16384 laisse une marge confortable pour les sessions les plus
+        // denses sans changer le comportement des sessions plus courtes.
+        generationConfig: { temperature: 0.3, maxOutputTokens: 16384, responseMimeType: 'application/json' },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },

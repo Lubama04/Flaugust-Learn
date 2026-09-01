@@ -109,11 +109,24 @@ export function useResourceLibrary(courseId: string) {
 
   const triggerIndex = useMutation({
     mutationFn: async (resourceId: string) => {
-      const { data, error } = await supabase.functions.invoke<{ error?: string }>('index-resource', {
+      const { data, error } = await supabase.functions.invoke<{ error?: string; message?: string }>('index-resource', {
         body: { resource_id: resourceId },
       })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
+      if (error) {
+        // supabase-js ne remplit pas `data` sur un statut non-2xx (FunctionsHttpError) : le
+        // message utile ({error, message}) est dans le corps de la réponse, accessible via
+        // error.context, pas dans error.message qui reste un texte générique inexploitable.
+        const context = (error as { context?: Response }).context
+        let bodyMessage: string | undefined
+        try {
+          const body = await context?.clone().json()
+          bodyMessage = body?.message ?? body?.error
+        } catch {
+          // corps illisible, on retombe sur le message générique ci-dessous
+        }
+        throw new Error(bodyMessage || (error instanceof Error ? error.message : "Erreur lors de l'indexation"))
+      }
+      if (data?.error) throw new Error(data.message || data.error)
     },
     onSuccess: () => {
       toast.success('Indexation IA lancée')
