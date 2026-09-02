@@ -38,6 +38,10 @@ export function TexteCard({ sessionId, enrollmentId, contentHtml, isCompleted, o
       onCompleted()
     } catch {
       completedRef.current = false
+      // Échec silencieux avant ce correctif : le clic sur "Terminer" ne produisait alors
+      // aucun effet visible en cas d'erreur réseau ou de session expirée, ressemblant à un
+      // bouton figé plutôt qu'à une erreur récupérable.
+      toast.error('Impossible de valider cette session. Vérifiez votre connexion et réessayez.')
     }
   }
 
