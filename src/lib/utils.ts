@@ -22,6 +22,18 @@ export function formatPrice(priceFcfa: number): string {
   return `${new Intl.NumberFormat('fr-FR').format(priceFcfa)} FCFA`
 }
 
+/**
+ * Impose une limite de temps à une requête. Sans elle, un appel Supabase qui reste bloqué (panne
+ * réseau, incident côté plateforme) laisse React Query dans son état `isLoading` indéfiniment,
+ * sans jamais résoudre ni rejeter, un spinner infini plutôt qu'un message d'erreur exploitable.
+ */
+export function withTimeout<T>(promise: PromiseLike<T>, ms = 10_000, message = 'Le chargement prend trop de temps. Réessayez.'): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ])
+}
+
 /** Convertit un titre en slug URL (ex: "Ma Formation !" -> "ma-formation"). */
 export function slugify(input: string): string {
   return input

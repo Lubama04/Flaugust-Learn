@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Plus, BookOpen, ClipboardCheck } from 'lucide-react'
+import { Plus, BookOpen, ClipboardCheck, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { withTimeout } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -37,11 +38,14 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 async function fetchMyCourses(formateurId: string) {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('formateur_id', formateurId)
-    .order('created_at', { ascending: false })
+  // withTimeout : sans lui, une requête qui reste bloquée (panne réseau ou incident côté
+  // plateforme) laisse cette page dans un spinner "Chargement…" indéfini, sans jamais afficher
+  // d'erreur exploitable, constaté en production.
+  const { data, error } = await withTimeout(
+    supabase.from('courses').select('*').eq('formateur_id', formateurId).order('created_at', { ascending: false }),
+    10_000,
+    'Le chargement de vos formations prend trop de temps. Vérifiez votre connexion et réessayez.'
+  )
   if (error) throw error
   return data
 }
@@ -49,10 +53,19 @@ async function fetchMyCourses(formateurId: string) {
 export function DashboardFormateurPage() {
   const userId = useAuthStore((s) => s.session?.user.id)
 
-  const { data: courses, isLoading } = useQuery({
+  const {
+    data: courses,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['my-courses', userId],
     queryFn: () => fetchMyCourses(userId!),
     enabled: !!userId,
+    // Pas de retry automatique : la requête a déjà son propre délai de 10s côté fetchMyCourses,
+    // enchaîner des tentatives silencieuses retarderait d'autant l'affichage du message d'erreur.
+    retry: false,
   })
 
   const { data: pendingEnrollments, isLoading: pendingLoading } = useQuery({
@@ -99,6 +112,16 @@ export function DashboardFormateurPage() {
 
       {isLoading ? (
         <LoadingSpinner label="Chargement…" />
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-8 text-center">
+          <AlertTriangle className="h-8 w-8 text-red-400" />
+          <p className="text-sm text-red-600">
+            {error instanceof Error ? error.message : 'Erreur lors du chargement de vos formations.'}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Réessayer
+          </Button>
+        </div>
       ) : !courses || courses.length === 0 ? (
         <EmptyState
           icon={BookOpen}
