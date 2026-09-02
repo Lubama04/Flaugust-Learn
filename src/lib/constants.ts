@@ -15,9 +15,17 @@ export const APP_URL =
 
 export const COURSE_LEVELS = [
   { value: 'debutant', label: 'Débutant' },
+  { value: 'debutant_intermediaire', label: 'Débutant et intermédiaire' },
   { value: 'intermediaire', label: 'Intermédiaire' },
   { value: 'avance', label: 'Avancé' },
+  { value: 'autre', label: 'Autre' },
 ] as const
+
+/** Libellé d'affichage d'un niveau : le texte libre level_custom prime quand level = 'autre'. */
+export function getLevelLabel(level: string, levelCustom?: string | null): string {
+  if (level === 'autre' && levelCustom) return levelCustom
+  return COURSE_LEVELS.find((l) => l.value === level)?.label ?? level
+}
 
 export const ROLE_LABELS: Record<string, string> = {
   apprenant: 'Apprenant',

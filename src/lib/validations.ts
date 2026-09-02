@@ -28,7 +28,8 @@ export const courseFormSchema = z.object({
   shortDescription: z.string().trim().min(10, 'Description courte trop courte').max(300),
   // La description complète est gérée hors react-hook-form (RichTextEditor produit du HTML,
   // validé manuellement dans CourseForm.tsx) : même pattern que content_text dans SessionEditor.
-  level: z.enum(['debutant', 'intermediaire', 'avance']),
+  level: z.enum(['debutant', 'debutant_intermediaire', 'intermediaire', 'avance', 'autre']),
+  levelCustom: z.string().max(60).optional(),
   language: z.string().trim().min(2).max(10),
   durationHours: z.number().min(0).max(1000),
   isFree: z.boolean(),

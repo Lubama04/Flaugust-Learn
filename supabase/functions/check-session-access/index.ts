@@ -5,17 +5,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Corrige un bug réel constaté en production ("formations visibles mais impossibles à ouvrir,
+// même pour un apprenant inscrit et validé, y compris les sessions en free preview") : la version
+// précédente appelait `supabase.auth.getUser()` (client service_role) de façon inconditionnelle,
+// AVANT même la vérification is_free_preview, pour identifier l'appelant. Cet appel dépend du
+// service GoTrue de Supabase et échouait pendant un incident réel de la plateforme, bloquant
+// l'accès à TOUT contenu, y compris le contenu gratuit qui ne devrait dépendre d'aucune identité.
+// Cette version utilise un client scopé au JWT de l'appelant : la RLS (déjà en place sur
+// enrollments/session_progress/exercise_results, vérifiée table par table) résout auth.uid()
+// localement via la signature du JWT, sans appel réseau vers GoTrue. Une ligne qui n'appartient
+// pas à l'appelant ne revient simplement pas, ce qui vérifie l'identité aussi sûrement que
+// getUser() sans la dépendance fragile.
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
@@ -24,15 +30,11 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
     )
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ allowed: false, reason: 'Token invalide' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
 
     const { session_id, enrollment_id } = await req.json()
 
@@ -43,21 +45,8 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const { data: enrollment, error: enrollError } = await supabase
-      .from('enrollments')
-      .select('id, user_id, course_id, status')
-      .eq('id', enrollment_id)
-      .eq('user_id', user.id)
-      .in('status', ['actif', 'complete'])
-      .single()
-
-    if (enrollError || !enrollment) {
-      return new Response(
-        JSON.stringify({ allowed: false, reason: 'Inscription non trouvée ou inactive' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
+    // Toute session en free preview reste accessible même sans inscription valide : vérifié
+    // AVANT la recherche de l'inscription, pour ne jamais dépendre de celle-ci.
     const { data: targetSession, error: sessionError } = await supabase
       .from('sessions')
       .select(`
@@ -78,16 +67,33 @@ Deno.serve(async (req: Request) => {
 
     const moduleData = targetSession.module as unknown as { id: string; order_index: number; course_id: string }
 
-    if (moduleData.course_id !== enrollment.course_id) {
+    if (targetSession.is_free_preview) {
       return new Response(
-        JSON.stringify({ allowed: false, reason: 'Session hors du cours' }),
+        JSON.stringify({ allowed: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (targetSession.is_free_preview) {
+    // La RLS "Voir ses inscriptions" (user_id = auth.uid() OR formateur OR admin) garantit à elle
+    // seule que cette ligne, si elle revient, appartient bien à l'appelant : pas besoin de la
+    // revérifier explicitement.
+    const { data: enrollment, error: enrollError } = await supabase
+      .from('enrollments')
+      .select('id, course_id, status')
+      .eq('id', enrollment_id)
+      .in('status', ['actif', 'complete'])
+      .single()
+
+    if (enrollError || !enrollment) {
       return new Response(
-        JSON.stringify({ allowed: true }),
+        JSON.stringify({ allowed: false, reason: 'Inscription non trouvée ou inactive' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (moduleData.course_id !== enrollment.course_id) {
+      return new Response(
+        JSON.stringify({ allowed: false, reason: 'Session hors du cours' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

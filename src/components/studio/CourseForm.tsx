@@ -63,6 +63,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CourseFormInput>({
     resolver: zodResolver(courseFormSchema),
@@ -70,6 +71,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
       title: course?.title ?? '',
       shortDescription: course?.short_description ?? '',
       level: (course?.level as CourseFormInput['level']) ?? 'debutant',
+      levelCustom: course?.level_custom ?? '',
       language: course?.language ?? 'fr',
       durationHours: course?.duration_hours ?? 0,
       isFree: course?.is_free ?? false,
@@ -89,6 +91,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
       title: course.title,
       shortDescription: course.short_description,
       level: course.level as CourseFormInput['level'],
+      levelCustom: course.level_custom ?? '',
       language: course.language,
       durationHours: course.duration_hours,
       isFree: course.is_free,
@@ -118,6 +121,7 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
       short_description: values.shortDescription,
       description: descriptionHtml,
       level: values.level,
+      level_custom: values.level === 'autre' ? (values.levelCustom?.trim() || null) : null,
       language: values.language,
       duration_hours: values.durationHours,
       is_free: values.isFree,
@@ -256,6 +260,13 @@ export function CourseForm({ course, onSaved }: CourseFormProps) {
               </option>
             ))}
           </select>
+          {watch('level') === 'autre' && (
+            <Input
+              placeholder="Précisez le niveau…"
+              {...register('levelCustom')}
+              className="mt-2"
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="durationHours">Durée totale (heures)</Label>

@@ -374,6 +374,7 @@ export type Database = {
           is_free: boolean
           language: string
           level: string
+          level_custom: string | null
           max_attempts_final: number
           objectives: string[]
           pass_score_final: number
@@ -402,6 +403,7 @@ export type Database = {
           is_free?: boolean
           language?: string
           level?: string
+          level_custom?: string | null
           max_attempts_final?: number
           objectives?: string[]
           pass_score_final?: number
@@ -430,6 +432,7 @@ export type Database = {
           is_free?: boolean
           language?: string
           level?: string
+          level_custom?: string | null
           max_attempts_final?: number
           objectives?: string[]
           pass_score_final?: number

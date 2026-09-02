@@ -4,12 +4,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
+import { getLevelLabel } from '@/lib/constants'
 import type { Course, EnrollmentStatus } from '@/types'
 
-const LEVEL_BADGE: Record<string, { label: string; variant: 'secondary' | 'accent' | 'magenta' }> = {
-  debutant: { label: 'Débutant', variant: 'secondary' },
-  intermediaire: { label: 'Intermédiaire', variant: 'accent' },
-  avance: { label: 'Avancé', variant: 'magenta' },
+const LEVEL_VARIANT: Record<string, 'secondary' | 'accent' | 'magenta'> = {
+  debutant: 'secondary',
+  debutant_intermediaire: 'secondary',
+  intermediaire: 'accent',
+  avance: 'magenta',
+  autre: 'magenta',
 }
 
 interface CourseCardProps {
@@ -19,7 +22,8 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, enrollmentStatus }: CourseCardProps) {
-  const level = LEVEL_BADGE[course.level] ?? { label: course.level, variant: 'secondary' as const }
+  const levelLabel = getLevelLabel(course.level, course.level_custom)
+  const levelVariant = LEVEL_VARIANT[course.level] ?? 'secondary'
 
   const ctaLabel =
     enrollmentStatus === 'actif'
@@ -45,7 +49,7 @@ export function CourseCard({ course, enrollmentStatus }: CourseCardProps) {
           )}
         </div>
         <CardContent className="flex flex-1 flex-col pt-6">
-          <Badge variant={level.variant}>{level.label}</Badge>
+          <Badge variant={levelVariant}>{levelLabel}</Badge>
           <h3 className="mt-3 line-clamp-2 min-h-[2.75rem] font-semibold text-dark">{course.title}</h3>
           {course.formateur_name && (
             <p className="mt-1 text-sm text-gray">Par {course.formateur_name}</p>
