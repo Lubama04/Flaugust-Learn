@@ -1,5 +1,4 @@
 import { Outlet, Link } from '@tanstack/react-router'
-import { GraduationCap } from 'lucide-react'
 import { Navbar } from '@/components/layout/Navbar'
 
 export function PublicLayout() {
@@ -19,11 +18,9 @@ function Footer() {
     <footer className="border-t border-gray-100 bg-lightGray">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-4 lg:px-8">
         <div>
-          <div className="flex items-center gap-2 font-display text-lg font-bold text-primary">
-            <GraduationCap className="h-6 w-6" aria-hidden="true" />
-            FlaugustLearn
-          </div>
-          <p className="mt-3 text-sm text-gray">
+          <img src="/logo-navbar.png" alt="FlaugustLearn" className="h-12 w-auto object-contain" />
+          <p className="mt-3 text-sm font-medium text-dark">Connectés au savoir. Prêts à agir.</p>
+          <p className="mt-1 text-sm text-gray">
             Plateforme e-learning professionnelle d'Établissement Flaugust Business.
           </p>
         </div>

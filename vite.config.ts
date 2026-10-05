@@ -14,19 +14,20 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo.png', 'logo-192.png', 'logo-72.png', 'push-sw.js'],
+      includeAssets: ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'logo-navbar.png', 'logo-72.png', 'logo-192.png', 'logo-512.png', 'push-sw.js'],
       manifest: {
         name: 'FlaugustLearn',
-        short_name: 'FLearn',
-        description: "Plateforme e-learning professionnelle — Flaugust Business",
+        short_name: 'FlaugustLearn',
+        description: 'Connectés au savoir. Prêts à agir.',
         theme_color: '#7B3415',
         background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/logo-72.png', sizes: '72x72', type: 'image/png' },
+          { src: '/logo-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/logo-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
       workbox: {

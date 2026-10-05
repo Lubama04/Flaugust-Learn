@@ -1,4 +1,3 @@
-import { GraduationCap } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { PublicCertificate } from '@/types'
 
@@ -18,12 +17,11 @@ export function CertificateDisplay({ certificate: c }: CertificateDisplayProps) 
         <div className="h-1 w-full rounded bg-gradient-to-r from-primary via-accent to-lime" />
 
         <div>
-          <div className="flex items-center justify-center gap-2 font-display text-sm uppercase tracking-[0.3em] text-primary">
-            <GraduationCap className="h-5 w-5" /> FlaugustLearn
-          </div>
+          <img src="/logo-navbar.png" alt="FlaugustLearn" className="mx-auto h-12 w-auto object-contain sm:h-16" />
           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-gray-400">
             Établissement Flaugust Business
           </p>
+          <p className="mt-1 text-xs text-gray-400">Connectés au savoir. Prêts à agir.</p>
           <div className="mx-auto mt-4 h-0.5 w-28 bg-gradient-to-r from-transparent via-primary to-transparent" />
           <h1 className="mt-4 font-display text-2xl font-bold leading-tight text-dark sm:text-4xl">
             Certificat de Pratique

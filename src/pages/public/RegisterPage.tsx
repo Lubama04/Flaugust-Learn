@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { GraduationCap, MailCheck } from 'lucide-react'
+import { MailCheck } from 'lucide-react'
 import { signUp } from '@/hooks/useAuth'
 import { registerSchema, type RegisterInput } from '@/lib/validations'
 import { useToast } from '@/hooks/useToast'
@@ -60,9 +60,10 @@ export function RegisterPage() {
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <div className="text-center">
-        <Link to="/" className="inline-flex items-center gap-2 font-display text-xl font-bold text-primary">
-          <GraduationCap className="h-7 w-7" /> FlaugustLearn
+        <Link to="/" className="inline-flex items-center">
+          <img src="/logo-navbar.png" alt="FlaugustLearn" className="h-14 w-auto object-contain" />
         </Link>
+        <p className="mt-2 text-sm text-gray">Connectés au savoir. Prêts à agir.</p>
         <h1 className="mt-6 text-2xl font-bold text-dark">Créer un compte</h1>
       </div>
 

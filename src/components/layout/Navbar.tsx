@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { GraduationCap, LogOut, Menu, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfile } from '@/hooks/useProfile'
@@ -53,9 +53,8 @@ export function Navbar({ dashboardLinks }: NavbarProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold text-primary">
-          <GraduationCap className="h-6 w-6" aria-hidden="true" />
-          FlaugustLearn
+        <Link to="/" className="flex items-center">
+          <img src="/logo-navbar.png" alt="FlaugustLearn" className="h-10 w-auto object-contain" />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">

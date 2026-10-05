@@ -77,6 +77,7 @@ export function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary/5 to-white">
         <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6 lg:px-8">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Connectés au savoir. Prêts à agir.</p>
           <h1 className="font-display text-4xl font-bold text-dark sm:text-5xl">
             Formez-vous avec les meilleurs experts africains
           </h1>

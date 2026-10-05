@@ -98,7 +98,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
 <body style="font-family:Inter,sans-serif;background:#f9fafb;padding:40px 0">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
   <div style="background:#7B3415;padding:32px;text-align:center">
-    <h1 style="color:white;font-size:24px;margin:0">FlaugustLearn</h1>
+    <img src="https://flaugustlearn.vercel.app/logo-navbar.png" alt="FlaugustLearn" height="56" style="background:#ffffff;border-radius:8px;padding:6px;display:inline-block">
     <p style="color:#E88930;margin:8px 0 0;font-size:13px;letter-spacing:2px;text-transform:uppercase">Établissement Flaugust Business</p>
   </div>
   <div style="padding:40px">
@@ -117,7 +117,7 @@ Contactez-le pour convenir du paiement avant de valider son inscription.`
     </div>
   </div>
   <div style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #eee">
-    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn, Flaugust Business | Réflexion, Action, Impact</p>
+    <p style="color:#aaa;font-size:12px;margin:0">FlaugustLearn, Flaugust Business | Connectés au savoir. Prêts à agir.</p>
   </div>
 </div>
 </body></html>`
