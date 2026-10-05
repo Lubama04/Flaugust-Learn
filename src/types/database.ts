@@ -1383,6 +1383,14 @@ export type Database = {
       }
     }
     Functions: {
+      formateur_validate_session: {
+        Args: { p_enrollment_id: string; p_session_id: string }
+        Returns: undefined
+      }
+      formateur_issue_certificate: {
+        Args: { p_enrollment_id: string }
+        Returns: string
+      }
       check_course_completion: {
         Args: { p_enrollment_id: string }
         Returns: boolean

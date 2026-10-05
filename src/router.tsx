@@ -21,6 +21,7 @@ import { NotificationsPage } from '@/pages/public/NotificationsPage'
 import { DashboardPage } from '@/pages/apprenant/DashboardPage'
 import { MesFormationsPage } from '@/pages/apprenant/MesFormationsPage'
 import { MesCertificatsPage } from '@/pages/apprenant/MesCertificatsPage'
+import { MonEspacePage } from '@/pages/apprenant/MonEspacePage'
 import { MonDossierPage } from '@/pages/apprenant/MonDossierPage'
 import { ProfilPage } from '@/pages/apprenant/ProfilPage'
 import { CourseReaderPage } from '@/pages/apprenant/CourseReaderPage'
@@ -32,6 +33,8 @@ import { CourseCreatePage } from '@/pages/formateur/CourseCreatePage'
 import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
 import { QuizGeneratorPage } from '@/pages/formateur/QuizGeneratorPage'
 import { AssistantIAPage } from '@/pages/formateur/AssistantIAPage'
+import { SuiviApprenantsPage } from '@/pages/formateur/SuiviApprenantsPage'
+import { SuiviDetailPage } from '@/pages/formateur/SuiviDetailPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
 import { UsersPage } from '@/pages/admin/UsersPage'
@@ -143,6 +146,11 @@ const mesFormationsRoute = createRoute({
   path: '/mes-formations',
   component: MesFormationsPage,
 })
+const monEspaceRoute = createRoute({
+  getParentRoute: () => apprentLayoutRoute,
+  path: '/mon-espace',
+  component: MonEspacePage,
+})
 const mesCertificatsRoute = createRoute({
   getParentRoute: () => apprentLayoutRoute,
   path: '/mes-certificats',
@@ -179,6 +187,16 @@ const quizGeneratorRoute = createRoute({
   getParentRoute: () => formateurLayoutRoute,
   path: '/formateur/quiz-generator',
   component: QuizGeneratorPage,
+})
+const suiviRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/suivi',
+  component: SuiviApprenantsPage,
+})
+const suiviDetailRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/suivi/$apprenantId/$courseId',
+  component: SuiviDetailPage,
 })
 const assistantIARoute = createRoute({
   getParentRoute: () => formateurLayoutRoute,
@@ -239,13 +257,15 @@ const routeTree = rootRoute.addChildren([
     courseChatRoute,
     notificationsRoute,
   ]),
-  apprentLayoutRoute.addChildren([dashboardRoute, mesFormationsRoute, mesCertificatsRoute]),
+  apprentLayoutRoute.addChildren([dashboardRoute, monEspaceRoute, mesFormationsRoute, mesCertificatsRoute]),
   formateurLayoutRoute.addChildren([
     formateurDashboardRoute,
     inscriptionsRoute,
     courseCreateRoute,
     courseEditRoute,
     quizGeneratorRoute,
+    suiviRoute,
+    suiviDetailRoute,
     assistantIARoute,
   ]),
   adminLayoutRoute.addChildren([adminDashboardRoute, adminUsersRoute, adminPaymentsRoute]),

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AdminPedagogiquePanel } from '@/components/tracking/AdminPedagogiquePanel'
 import { Link } from '@tanstack/react-router'
 import { Users, BookOpen, ClipboardList, Award, Clock, Wallet } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -43,6 +45,7 @@ const ROLES: UserRole[] = ['apprenant', 'formateur', 'institution', 'admin']
 export function DashboardAdminPage() {
   const toast = useToast()
   const queryClient = useQueryClient()
+  const [tab, setTab] = useState<'general' | 'pedagogique'>('general')
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats'],
@@ -70,6 +73,32 @@ export function DashboardAdminPage() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-dark">Vue d'ensemble</h1>
 
+      <div className="flex gap-2 border-b border-gray-200" role="tablist">
+        {(
+          [
+            ['general', 'Général'],
+            ['pedagogique', 'Suivi pédagogique'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+              tab === key ? 'border-primary text-primary' : 'border-transparent text-gray hover:text-dark'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'pedagogique' ? (
+        <AdminPedagogiquePanel />
+      ) : (
+        <>
       {statsLoading ? (
         <LoadingSpinner label="Chargement des statistiques…" />
       ) : (
@@ -138,6 +167,8 @@ export function DashboardAdminPage() {
           </Card>
         )}
       </section>
+        </>
+      )}
     </div>
   )
 }
