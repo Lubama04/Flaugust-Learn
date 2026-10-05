@@ -34,6 +34,8 @@ import { CourseEditPage } from '@/pages/formateur/CourseEditPage'
 import { QuizGeneratorPage } from '@/pages/formateur/QuizGeneratorPage'
 import { AssistantIAPage } from '@/pages/formateur/AssistantIAPage'
 import { SuiviApprenantsPage } from '@/pages/formateur/SuiviApprenantsPage'
+import { PushPermissionBanner } from '@/components/shared/PushPermissionBanner'
+import { SoumissionsPage } from '@/pages/formateur/SoumissionsPage'
 import { SuiviDetailPage } from '@/pages/formateur/SuiviDetailPage'
 
 import { DashboardAdminPage } from '@/pages/admin/DashboardAdminPage'
@@ -41,7 +43,12 @@ import { UsersPage } from '@/pages/admin/UsersPage'
 import { PaymentsPage } from '@/pages/admin/PaymentsPage'
 
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <Outlet />
+      <PushPermissionBanner />
+    </>
+  ),
 })
 
 // ── Groupe PUBLIC ──────────────────────────────────────────────
@@ -188,6 +195,11 @@ const quizGeneratorRoute = createRoute({
   path: '/formateur/quiz-generator',
   component: QuizGeneratorPage,
 })
+const soumissionsRoute = createRoute({
+  getParentRoute: () => formateurLayoutRoute,
+  path: '/formateur/soumissions',
+  component: SoumissionsPage,
+})
 const suiviRoute = createRoute({
   getParentRoute: () => formateurLayoutRoute,
   path: '/formateur/suivi',
@@ -264,6 +276,7 @@ const routeTree = rootRoute.addChildren([
     courseCreateRoute,
     courseEditRoute,
     quizGeneratorRoute,
+    soumissionsRoute,
     suiviRoute,
     suiviDetailRoute,
     assistantIARoute,

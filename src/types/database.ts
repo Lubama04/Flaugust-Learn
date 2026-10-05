@@ -592,8 +592,82 @@ export type Database = {
           },
         ]
       }
+      exercise_submissions: {
+        Row: {
+          ai_feedback: string | null
+          ai_score: number | null
+          ai_validated_at: string | null
+          apprenant_id: string
+          created_at: string
+          exercise_id: string
+          formateur_feedback: string | null
+          formateur_score: number | null
+          formateur_validated_at: string | null
+          id: string
+          status: string
+          submission_file_url: string | null
+          submission_google_url: string | null
+          submission_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          ai_validated_at?: string | null
+          apprenant_id: string
+          created_at?: string
+          exercise_id: string
+          formateur_feedback?: string | null
+          formateur_score?: number | null
+          formateur_validated_at?: string | null
+          id?: string
+          status?: string
+          submission_file_url?: string | null
+          submission_google_url?: string | null
+          submission_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          ai_validated_at?: string | null
+          apprenant_id?: string
+          created_at?: string
+          exercise_id?: string
+          formateur_feedback?: string | null
+          formateur_score?: number | null
+          formateur_validated_at?: string | null
+          id?: string
+          status?: string
+          submission_file_url?: string | null
+          submission_google_url?: string | null
+          submission_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_submissions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_submissions_apprenant_id_fkey"
+            columns: ["apprenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
+          obligation_level: string
+          submission_mode: string
+          google_template_url: string | null
+          ai_auto_validate: boolean
+          ai_validation_criteria: string | null
           course_id: string | null
           created_at: string
           id: string
@@ -613,6 +687,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          obligation_level?: string
+          submission_mode?: string
+          google_template_url?: string | null
+          ai_auto_validate?: boolean
+          ai_validation_criteria?: string | null
           course_id?: string | null
           created_at?: string
           id?: string
@@ -632,6 +711,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          obligation_level?: string
+          submission_mode?: string
+          google_template_url?: string | null
+          ai_auto_validate?: boolean
+          ai_validation_criteria?: string | null
           course_id?: string | null
           created_at?: string
           id?: string
@@ -1163,6 +1247,8 @@ export type Database = {
       }
       push_subscriptions: {
         Row: {
+          device_info: string | null
+          updated_at: string
           auth_key: string
           created_at: string
           endpoint: string
@@ -1171,6 +1257,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          device_info?: string | null
+          updated_at?: string
           auth_key: string
           created_at?: string
           endpoint: string
@@ -1179,6 +1267,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          device_info?: string | null
+          updated_at?: string
           auth_key?: string
           created_at?: string
           endpoint?: string
@@ -1383,6 +1473,10 @@ export type Database = {
       }
     }
     Functions: {
+      formateur_review_submission: {
+        Args: { p_submission_id: string; p_status: string; p_score: number; p_feedback: string }
+        Returns: undefined
+      }
       formateur_validate_session: {
         Args: { p_enrollment_id: string; p_session_id: string }
         Returns: undefined

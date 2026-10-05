@@ -14,7 +14,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo.png'],
+      includeAssets: ['favicon.svg', 'logo.png', 'logo-192.png', 'logo-72.png', 'push-sw.js'],
       manifest: {
         name: 'FlaugustLearn',
         short_name: 'FLearn',
@@ -30,6 +30,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/push-sw.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Le bundle principal grossit avec les libs lourdes (tiptap, jspdf, docx,
         // html2canvas) — 2 Mo par défaut est trop juste ; marge portée à 4 Mo.

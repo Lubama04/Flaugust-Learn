@@ -131,6 +131,9 @@ export function Navbar({ dashboardLinks }: NavbarProps) {
                   >
                     <link.icon className="h-4 w-4" aria-hidden="true" />
                     {link.label}
+                    {link.badge ? (
+                      <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">{link.badge}</span>
+                    ) : null}
                   </Link>
                 ))
               ) : (

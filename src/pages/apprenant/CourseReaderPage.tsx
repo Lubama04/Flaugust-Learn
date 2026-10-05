@@ -19,6 +19,7 @@ import { VideoCard } from '@/components/reader/VideoCard'
 import { AudioCard } from '@/components/reader/AudioCard'
 import { PdfCard } from '@/components/reader/PdfCard'
 import { ExerciseModal } from '@/components/reader/ExerciseModal'
+import { ObligationBadge } from '@/components/reader/ObligationBadge'
 import { WorksheetPanel } from '@/components/reader/WorksheetPanel'
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel'
 import { CourseChat } from '@/components/chat/CourseChat'
@@ -162,6 +163,8 @@ function CourseReaderContent() {
     void navigate({ search: { session: session.id } })
   }
 
+  const sessionExercise = activeSession ? data?.exercises.find((ex) => ex.session_id === activeSession.id) : undefined
+
   const openExerciseIfAny = () => {
     if (!activeSession) return
     const exercise = data?.exercises.find((ex) => ex.session_id === activeSession.id)
@@ -276,6 +279,17 @@ function CourseReaderContent() {
           <EcranVerrouille access={access} onGoToPreviousSession={(id) => void navigate({ search: { session: id } })} />
         ) : (
           <div className="space-y-4">
+            {sessionExercise && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 bg-white px-4 py-2 text-sm">
+                <span className="flex items-center gap-2 text-gray">
+                  Exercice : <span className="font-medium text-dark">{sessionExercise.title}</span>
+                  <ObligationBadge level={sessionExercise.obligation_level} />
+                </span>
+                <Button size="sm" variant="outline" onClick={() => setExerciseModalExercise(sessionExercise)}>
+                  Ouvrir l'exercice
+                </Button>
+              </div>
+            )}
             {activeSession.type !== 'texte' && (
               <div>
                 <h2 className="text-lg font-semibold text-dark">{activeSession.title}</h2>

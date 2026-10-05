@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabase'
 
 export interface SessionAccessResult {
   allowed: boolean
-  reason?: 'session_not_completed' | 'exercise_not_passed' | string
+  reason?: 'session_not_completed' | 'exercise_not_passed' | 'mandatory_exercise_not_validated' | string
   previous_session_id?: string
   exercise_id?: string
+  exercise_title?: string
 }
 
 async function checkSessionAccess(sessionId: string, enrollmentId: string): Promise<SessionAccessResult> {

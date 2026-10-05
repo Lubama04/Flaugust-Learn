@@ -162,29 +162,46 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const { data: prevExercise } = await supabase
+    // Exercices obligatoires de la session précédente (Gate System renforcé). Un quiz est réussi
+    // quand un exercise_results.passed existe ; un exercice à soumission (texte, document,
+    // Google Doc/Sheet) l'est quand sa soumission est validée par l'IA ou le formateur.
+    // Si plusieurs exercices sont obligatoires, tous doivent être validés.
+    const { data: mandatory } = await supabase
       .from('exercises')
-      .select('id, pass_score')
+      .select('id, title, submission_mode')
       .eq('session_id', previousSession.id)
       .eq('is_final_exam', false)
-      .single()
+      .eq('obligation_level', 'obligatoire')
 
-    if (prevExercise) {
-      const { data: passedResult } = await supabase
-        .from('exercise_results')
-        .select('id, passed')
-        .eq('exercise_id', prevExercise.id)
-        .eq('enrollment_id', enrollment_id)
-        .eq('passed', true)
-        .limit(1)
-        .single()
+    for (const exercise of mandatory ?? []) {
+      let validated = false
+      if (exercise.submission_mode === 'quiz') {
+        const { data: passedResult } = await supabase
+          .from('exercise_results')
+          .select('id')
+          .eq('exercise_id', exercise.id)
+          .eq('enrollment_id', enrollment_id)
+          .eq('passed', true)
+          .limit(1)
+        validated = (passedResult?.length ?? 0) > 0
+      } else {
+        // RLS : un apprenant ne relit que ses propres soumissions.
+        const { data: submissions } = await supabase
+          .from('exercise_submissions')
+          .select('status')
+          .eq('exercise_id', exercise.id)
+          .in('status', ['valide_ia', 'valide_formateur'])
+          .limit(1)
+        validated = (submissions?.length ?? 0) > 0
+      }
 
-      if (!passedResult) {
+      if (!validated) {
         return new Response(
           JSON.stringify({
             allowed: false,
-            reason: 'exercise_not_passed',
-            exercise_id: prevExercise.id,
+            reason: exercise.submission_mode === 'quiz' ? 'exercise_not_passed' : 'mandatory_exercise_not_validated',
+            exercise_id: exercise.id,
+            exercise_title: exercise.title,
             previous_session_id: previousSession.id
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SUBMISSION_MODE_LABELS } from '@/lib/submissions'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -67,6 +68,13 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
   const [passScore, setPassScore] = useState(70)
   const [maxAttempts, setMaxAttempts] = useState(3)
   const [questions, setQuestions] = useState<AnyQuestion[]>([])
+  const [submissionMode, setSubmissionMode] = useState('quiz')
+  const [obligation, setObligation] = useState('facultatif')
+  const [aiCriteria, setAiCriteria] = useState('')
+  const [googleUrl, setGoogleUrl] = useState('')
+  const [aiAuto, setAiAuto] = useState(true)
+  const isQuiz = submissionMode === 'quiz'
+  const isGoogle = submissionMode === 'google_doc' || submissionMode === 'google_sheet'
 
   useEffect(() => {
     if (!existing) return
@@ -76,6 +84,11 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
     setPassScore(existing.pass_score)
     setMaxAttempts(existing.max_attempts)
     setQuestions((existing.questions as unknown as AnyQuestion[]) ?? [])
+    setSubmissionMode(existing.submission_mode)
+    setObligation(existing.obligation_level)
+    setAiCriteria(existing.ai_validation_criteria ?? '')
+    setGoogleUrl(existing.google_template_url ?? '')
+    setAiAuto(existing.ai_auto_validate)
   }, [existing])
 
   const saveMutation = useMutation({
@@ -83,8 +96,14 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
       const payload = {
         title,
         instructions,
-        type,
-        questions: questions as unknown as Json,
+        // Les exercices à soumission n'ont pas de questions : `type` reçoit une valeur neutre.
+        type: isQuiz ? type : ('reponse_courte' as ExerciseType),
+        questions: (isQuiz ? questions : []) as unknown as Json,
+        submission_mode: isFinalExam ? 'quiz' : submissionMode,
+        obligation_level: isFinalExam ? 'obligatoire' : obligation,
+        google_template_url: isGoogle ? googleUrl.trim() || null : null,
+        ai_auto_validate: aiAuto,
+        ai_validation_criteria: isQuiz ? null : aiCriteria.trim() || null,
         pass_score: passScore,
         max_attempts: maxAttempts,
         is_final_exam: isFinalExam,
@@ -122,7 +141,7 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
 
   if (isLoading) return <LoadingSpinner label="Chargement de l'exercice…" />
 
-  const canSave = title.trim().length > 0 && questions.length > 0
+  const canSave = title.trim().length > 0 && (isQuiz ? questions.length > 0 : true)
 
   return (
     <div className="space-y-5">
@@ -131,23 +150,84 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
           <Label htmlFor="ex-title">Titre de l'exercice</Label>
           <Input id="ex-title" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
+        {!isFinalExam && (
+          <div className="space-y-2">
+            <Label htmlFor="ex-mode">Format</Label>
+            <select
+              id="ex-mode"
+              value={submissionMode}
+              onChange={(e) => setSubmissionMode(e.target.value)}
+              disabled={!!existing}
+              className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark disabled:opacity-60"
+            >
+              {Object.entries(SUBMISSION_MODE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {value === 'quiz' ? 'QCM et quiz auto-corrigés' : label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {isQuiz && (
+          <div className="space-y-2">
+            <Label htmlFor="ex-type">Type de quiz</Label>
+            <select
+              id="ex-type"
+              value={type}
+              onChange={(e) => setType(e.target.value as ExerciseType)}
+              disabled={!!existing}
+              className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark disabled:opacity-60"
+            >
+              {BUILDABLE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {!isFinalExam && (
         <div className="space-y-2">
-          <Label htmlFor="ex-type">Type</Label>
+          <Label htmlFor="ex-obligation">Niveau d'obligation</Label>
           <select
-            id="ex-type"
-            value={type}
-            onChange={(e) => setType(e.target.value as ExerciseType)}
-            disabled={!!existing}
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark disabled:opacity-60"
+            id="ex-obligation"
+            value={obligation}
+            onChange={(e) => setObligation(e.target.value)}
+            className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-dark"
           >
-            {BUILDABLE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {TYPE_LABELS[t]}
-              </option>
-            ))}
+            <option value="facultatif">Facultatif</option>
+            <option value="recommande">Recommandé</option>
+            <option value="obligatoire">Obligatoire (bloque la session suivante tant qu'il n'est pas validé)</option>
           </select>
         </div>
-      </div>
+      )}
+
+      {!isQuiz && (
+        <div className="space-y-4 rounded-lg border border-gray-100 bg-lightGray/40 p-4">
+          {isGoogle && (
+            <div className="space-y-2">
+              <Label htmlFor="ex-google">Lien du document modèle (Google)</Label>
+              <Input id="ex-google" type="url" placeholder="https://docs.google.com/..." value={googleUrl} onChange={(e) => setGoogleUrl(e.target.value)} />
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input id="ex-ai-auto" type="checkbox" checked={aiAuto} onChange={(e) => setAiAuto(e.target.checked)} className="h-4 w-4" />
+            <Label htmlFor="ex-ai-auto">Validation automatique par l'IA</Label>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ex-criteria">Critères de validation pour l'IA</Label>
+            <Textarea
+              id="ex-criteria"
+              rows={3}
+              value={aiCriteria}
+              onChange={(e) => setAiCriteria(e.target.value)}
+              placeholder="Ex : la réponse doit définir le concept, donner deux exemples et citer une source."
+            />
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="ex-instructions">Instructions</Label>
@@ -156,7 +236,7 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="ex-pass-score">Score de réussite (%)</Label>
+          <Label htmlFor="ex-pass-score">Score minimum de passage (%)</Label>
           <Input
             id="ex-pass-score"
             type="number"
@@ -178,6 +258,7 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
         </div>
       </div>
 
+      {isQuiz && (
       <div className="space-y-2 border-t border-gray-100 pt-4">
         <div className="flex items-center justify-between">
           <Label>Questions</Label>
@@ -203,6 +284,7 @@ export function ExerciseBuilder({ sessionId, courseId, onSaved, onCancel }: Exer
           <ReponseCourteBuilder questions={questions as ReponseCourteQuestion[]} onChange={(q) => setQuestions(q)} />
         )}
       </div>
+      )}
 
       <div className="flex items-center gap-2 pt-2">
         <Button onClick={() => saveMutation.mutate()} disabled={!canSave || saveMutation.isPending}>

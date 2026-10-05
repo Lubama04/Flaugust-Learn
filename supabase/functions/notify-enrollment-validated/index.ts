@@ -46,13 +46,14 @@ Deno.serve(async (req: Request) => {
 
   const { data: enrollment, error: fetchError } = await userClient
     .from('enrollments')
-    .select('id, status, student:profiles!enrollments_user_id_fkey(full_name, email), course:courses(title)')
+    .select('id, status, user_id, student:profiles!enrollments_user_id_fkey(full_name, email), course:courses(title, slug)')
     .eq('id', enrollmentId)
     .single<{
       id: string
       status: string
+      user_id: string
       student: { full_name: string; email: string } | null
-      course: { title: string } | null
+      course: { title: string; slug: string } | null
     }>()
 
   if (fetchError || !enrollment || !enrollment.student || !enrollment.course) {
@@ -60,6 +61,16 @@ Deno.serve(async (req: Request) => {
     // du point de vue de l'API ceci est indiscernable d'un id inexistant.
     return jsonResponse({ error: 'Inscription introuvable' }, 404)
   }
+
+  // Notification in-app : un trigger Postgres sur `notifications` la relaie en notification push.
+  const serviceClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  await serviceClient.from('notifications').insert({
+    user_id: enrollment.user_id,
+    type: 'inscription_validee',
+    title: 'Inscription validée !',
+    message: `Vous pouvez commencer ${enrollment.course.title}`,
+    metadata: { enrollment_id: enrollment.id, url: `/formation/${enrollment.course.slug}/apprendre` },
+  })
 
   const resendKey = Deno.env.get('RESEND_API_KEY')
   if (!resendKey) {

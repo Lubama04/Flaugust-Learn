@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { ExerciseRenderer } from '@/components/reader/ExerciseRenderer'
 import { useExercise } from '@/hooks/useExercise'
 import { useToast } from '@/hooks/useToast'
+import { ExerciseSubmissionModal } from '@/components/reader/ExerciseSubmissionModal'
+import { ObligationBadge } from '@/components/reader/ObligationBadge'
 import type { Exercise } from '@/types'
 
 interface ExerciseModalProps {
@@ -15,7 +17,21 @@ interface ExerciseModalProps {
   onPassed: () => void
 }
 
-export function ExerciseModal({ exercise, enrollmentId, open, onClose, onPassed }: ExerciseModalProps) {
+export function ExerciseModal(props: ExerciseModalProps) {
+  if (props.exercise.submission_mode !== 'quiz') {
+    return (
+      <ExerciseSubmissionModal
+        exercise={props.exercise}
+        open={props.open}
+        onClose={props.onClose}
+        onSubmitted={props.onPassed}
+      />
+    )
+  }
+  return <QuizExerciseModal {...props} />
+}
+
+function QuizExerciseModal({ exercise, enrollmentId, open, onClose, onPassed }: ExerciseModalProps) {
   const toast = useToast()
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [startedAt] = useState(() => Date.now())
@@ -51,6 +67,9 @@ export function ExerciseModal({ exercise, enrollmentId, open, onClose, onPassed 
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
+          <div className="mb-1">
+            <ObligationBadge level={exercise.obligation_level} />
+          </div>
           <DialogTitle>{exercise.title}</DialogTitle>
           {exercise.instructions && <DialogDescription>{exercise.instructions}</DialogDescription>}
         </DialogHeader>

@@ -10,9 +10,11 @@ interface EcranVerrouilleProps {
 
 export function EcranVerrouille({ access, onGoToPreviousSession }: EcranVerrouilleProps) {
   const message =
-    access.reason === 'exercise_not_passed'
-      ? "Vous devez d'abord réussir l'exercice de validation de la session précédente."
-      : access.reason === 'session_not_completed'
+    access.reason === 'mandatory_exercise_not_validated'
+      ? `L'exercice obligatoire « ${access.exercise_title ?? ''} » doit être validé avant de continuer.`
+      : access.reason === 'exercise_not_passed'
+        ? "Vous devez d'abord réussir l'exercice de validation de la session précédente."
+        : access.reason === 'session_not_completed'
         ? 'Vous devez terminer la session précédente avant de continuer.'
         : "Cette session n'est pas encore accessible."
 
@@ -20,7 +22,9 @@ export function EcranVerrouille({ access, onGoToPreviousSession }: EcranVerrouil
     <Card className="mx-auto max-w-lg bg-lightGray/60">
       <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
         <Lock className="h-14 w-14 text-gray-300" aria-hidden="true" />
-        <h2 className="text-lg font-semibold text-dark">Session verrouillée</h2>
+        <h2 className="text-lg font-semibold text-dark">
+          {access.reason === 'mandatory_exercise_not_validated' ? 'Exercice obligatoire non validé' : 'Session verrouillée'}
+        </h2>
         <p className="max-w-sm text-sm text-gray">{message}</p>
         {access.previous_session_id && (
           <Button variant="outline" onClick={() => onGoToPreviousSession(access.previous_session_id!)}>

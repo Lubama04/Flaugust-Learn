@@ -6,6 +6,8 @@ export interface SidebarLink {
   to: string
   label: string
   icon: LucideIcon
+  /** Compteur affiché en pastille rouge (ex : soumissions à réviser). */
+  badge?: number
 }
 
 interface DashboardSidebarProps {
@@ -37,6 +39,9 @@ export function DashboardSidebar({ links, roleLabel }: DashboardSidebarProps) {
           >
             <link.icon className="h-4 w-4" aria-hidden="true" />
             {link.label}
+            {link.badge ? (
+              <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">{link.badge}</span>
+            ) : null}
           </Link>
         ))}
       </nav>
